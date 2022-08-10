@@ -53,7 +53,7 @@ struct cpu_t {
 				read(op);
 				cy++;
 				break;
-			case 0x1: // ad n + i
+			case 0x1: // ad n, i
 				read(op + i);
 				cy++;
 				break;
@@ -61,7 +61,7 @@ struct cpu_t {
 				read(op);
 				cy++;
 				break;
-			case 0x3: // su n + i
+			case 0x3: // su n, i
 				read(op + i);
 				cy++;
 				break;
@@ -77,14 +77,13 @@ struct cpu_t {
 				write(op, a);
 				cy++;
 				break;
-			case 0x7: // wr n + i
+			case 0x7: // wr n, i
 				write(op + i, a);
 				cy++;
 				break;
-			case 0x8: // ii #n
-				i += op;
-				read(pc);
-				cy = 1;
+			case 0x8: // ii n
+				read(op);
+				cy++;
 				break;
 			case 0x9: // ri n
 				read(op);
@@ -127,7 +126,7 @@ struct cpu_t {
 				read(pc);
 				cy = 1;
 				break;
-			case 0x1: // ad n + i
+			case 0x1: // ad n, i
 				a += bus.data;
 				read(pc);
 				cy = 1;
@@ -137,7 +136,7 @@ struct cpu_t {
 				read(pc);
 				cy = 1;
 				break;
-			case 0x3: // su n + i
+			case 0x3: // su n, i
 				a -= bus.data;
 				read(pc);
 				cy = 1;
@@ -157,12 +156,15 @@ struct cpu_t {
 				read(pc);
 				cy = 1;
 				break;
-			case 0x7: // wr n + i
+			case 0x7: // wr n, i
 				a = 0;
 				read(pc);
 				cy = 1;
 				break;
-			case 0x8: // ii #n
+			case 0x8: // ii n
+				i += bus.data;
+				read(pc);
+				cy = 1;
 				break;
 			case 0x9: // ri n
 				i = bus.data;
