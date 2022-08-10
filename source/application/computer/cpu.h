@@ -33,10 +33,6 @@ struct cpu_t {
 			return;
 		}
 
-		if (pc == 0x0F10) {
-			pc = pc;
-		}
-
 		switch (cy) {
 		case 0:
 			read(pc);
@@ -53,30 +49,28 @@ struct cpu_t {
 			oc = bus.data >> 4;
 			pc++;
 			switch (oc) {
-			case 0x0: // ad #n
-				a += op;
-				read(pc);
-				cy = 1;
-				break;
-			case 0x1: // ad n
+			case 0x0: // ad n
 				read(op);
 				cy++;
 				break;
-			case 0x2: // ad n + i
+			case 0x1: // ad n + i
 				read(op + i);
 				cy++;
 				break;
-			case 0x3: // su #n
-				a -= op;
-				read(pc);
-				cy = 1;
-				break;
-			case 0x4: // su n
+			case 0x2: // su n
 				read(op);
 				cy++;
 				break;
-			case 0x5: // su n + i
+			case 0x3: // su n + i
 				read(op + i);
+				cy++;
+				break;
+			case 0x4: // ls n
+				read(op);
+				cy++;
+				break;
+			case 0x5: // rs n
+				read(op);
 				cy++;
 				break;
 			case 0x6: // wr n
@@ -100,27 +94,27 @@ struct cpu_t {
 				write(op, i);
 				cy++;
 				break;
-			case 0xB: // ju n
+			case 0xB: // go n
 				jump(op);
 				read(pc);
 				cy = 1;
 				break;
-			case 0xC: // jz n
+			case 0xC: // bz n
 				if (a == 0) jump(op);
 				read(pc);
 				cy = 1;
 				break;
-			case 0xD: // jn n
+			case 0xD: // bn n
 				if ((i8)a < 0) jump(op);
 				read(pc);
 				cy = 1;
 				break;
-			case 0xE: // ji n
+			case 0xE: // bi n
 				if (a == i) jump(op);
 				read(pc);
 				cy = 1;
 				break;
-			case 0xF: // js n
+			case 0xF: // ex n
 				write(op, lo(pc));
 				cy++;
 				break;
@@ -128,27 +122,33 @@ struct cpu_t {
 			break;
 		case 3:
 			switch (oc) {
-			case 0x0: // ad #n
-				break;
-			case 0x1: // ad n
+			case 0x0: // ad n
 				a += bus.data;
 				read(pc);
 				cy = 1;
 				break;
-			case 0x2: // ad n + i
+			case 0x1: // ad n + i
 				a += bus.data;
 				read(pc);
 				cy = 1;
 				break;
-			case 0x3: // su #n
-				break;
-			case 0x4: // su n
+			case 0x2: // su n
 				a -= bus.data;
 				read(pc);
 				cy = 1;
 				break;
-			case 0x5: // su n + i
+			case 0x3: // su n + i
 				a -= bus.data;
+				read(pc);
+				cy = 1;
+				break;
+			case 0x4: // ls n
+				a <<= bus.data;
+				read(pc);
+				cy = 1;
+				break;
+			case 0x5: // rs n
+				a >>= bus.data;
 				read(pc);
 				cy = 1;
 				break;
@@ -174,22 +174,22 @@ struct cpu_t {
 				read(pc);
 				cy = 1;
 				break;
-			case 0xB: // ju n
+			case 0xB: // go n
 				break;
-			case 0xC: // jz n
+			case 0xC: // bz n
 				break;
-			case 0xD: // jn n
+			case 0xD: // bn n
 				break;
-			case 0xE: // ji n
+			case 0xE: // bi n
 				break;
-			case 0xF: // js n
+			case 0xF: // ex n
 				write(op, 0xB0 | hi(pc + 1));
 				cy++;
 				break;
 			}
 			break;
 		case 4:
-			// js n is the only instruction that takes 4 cycles
+			// ex n is the only instruction that takes 4 cycles
 			jump(op + 2);
 			read(pc);
 			cy = 1;

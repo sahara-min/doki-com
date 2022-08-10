@@ -1,13 +1,13 @@
 #pragma once
 #include "./boot_rom.h"
 #include "./bus.h"
+#include "./byte_table.h"
 #include "./cpu.h"
 #include "./disk_controller.h"
 #include "./dma.h"
 #include "./scratch_ram.h"
 #include "./video_controller.h"
 #include "./work_ram.h"
-#include "./zero_sink.h"
 
 #include "./screen.h"
 
@@ -41,12 +41,12 @@ struct computer_t {
 	pri void tick() {
 		cpu.tick();
 		dma.tick();
+		byte_table.tick();
 		work_ram.tick();
 		boot_rom.tick();
 		scratch_ram.tick();
 		video_controller.tick();
 		disk_controller.tick();
-		zero_sink.tick();
 		screen.tick();
 	}
 };

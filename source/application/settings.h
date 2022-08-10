@@ -8,8 +8,11 @@ struct settings {
 	st cexp i32 screen_height = 180;
 	st cexp i32 target_scale = 8;
 
-	st cexp u16 work_ram_base = 0x0000;
-	st cexp u16 work_ram_size = 0x0F00;
+	st cexp u16	byte_table_base = 0x0000;
+	st cexp u16	byte_table_size = 0x0100;
+
+	st cexp u16 work_ram_base = 0x0100;
+	st cexp u16 work_ram_size = 0x0E00;
 
 	st cexp u16 boot_rom_base = 0x0F00;
 	st cexp u16 boot_rom_size = 0x00F0;
@@ -23,8 +26,6 @@ struct settings {
 	st cexp u16 keyboard_fifo = 0x0FFB;
 	st cexp u16 controller_fifo = 0x0FFC;
 	st cexp u16 disk_fifo = 0x0FFD;
-
-	st cexp u16 zero_sink = 0x0FFF;
 
 	st cexp u16 video_ram_base = 0x1000;
 	st cexp u16 video_ram_size = 0x2000;

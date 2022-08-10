@@ -1,5 +1,6 @@
 base F00  ; Boot ROM
 
+wram = 100
 page = FF0
 dma_fifo = FF8
 disk_fifo = FFD
@@ -7,7 +8,7 @@ sink = FFF
 
 boot_sequence:
 
-  wr sink               ; 02
+  ad hi(wram)           ; 02
   wr page               ; 04
 
 page_loop_start:
@@ -27,34 +28,34 @@ index_loop_start:
   ad disk_fifo          ; 12
   wr E00,i              ; 14
   
-  ii #1                 ; 16
+  ii 1                  ; 16
   bi index_loop_end     ; 18
   go index_loop_start   ; 1A
   
 index_loop_end:
   
   ad page               ; 1C
-  su #0E                ; 1E
+  su 0E                 ; 1E
   bz page_loop_end      ; 20
   
   wr sink               ; 22
   wr dma_fifo           ; 24
   wr dma_fifo           ; 26
-  ad #0E                ; 28
+  ad 0E                 ; 28
   wr dma_fifo           ; 2A
   wr dma_fifo           ; 2C
   ad page               ; 2E
   wr dma_fifo           ; 30
   wr dma_fifo           ; 32
-  ad #01                ; 34
+  ad 01                 ; 34
   wr dma_fifo           ; 36
   
   ad page               ; 38
-  ad #1                 ; 3A
+  ad 1                  ; 3A
   wr page               ; 3C
   
   go page_loop_start    ; 3E
 
 page_loop_end:
 
-  go 000                ; 40
+  go wram               ; 40
