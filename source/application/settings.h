@@ -12,10 +12,10 @@ struct settings {
 	st cexp u16 byte_table_size = 0x0100;
 
 	st cexp u16 work_ram_base = 0x0100;
-	st cexp u16 work_ram_size = 0x0E00;
+	st cexp u16 work_ram_size = 0x0D00;
 
-	st cexp u16 boot_rom_base = 0x0F00;
-	st cexp u16 boot_rom_size = 0x00F0;
+	st cexp u16 boot_rom_base = 0x0E00;
+	st cexp u16 boot_rom_size = 0x01F0;
 
 	st cexp u16 scratch_ram_base = 0x0FF0;
 	st cexp u16 scratch_ram_size = 0x0008;

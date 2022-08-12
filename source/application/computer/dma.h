@@ -4,10 +4,10 @@
 
 struct dma_t {
 
-	pri i32 cycle;
+	pri i16 cycle;
 	pri union {
-		struct { u8 _pad, cmd; u16 src, dst, cnt; };
-		u8 fifo[8];
+		struct { u8 cmd, src, dst; };
+		u8 fifo[3];
 	};
 	
 	pub bool is_transfering() {
@@ -15,11 +15,10 @@ struct dma_t {
 	}
 
 	pub void power_on() {
-		cycle = -(i32)sizeof(fifo) + 1;
+		cycle = -(i16)sizeof(fifo);
 		cmd = 0x00;
-		src = 0x0000;
-		dst = 0x0000;
-		cnt = 0x0000;
+		src = 0x00;
+		dst = 0x00;
 	}
 
 	pub void tick() {
@@ -33,23 +32,20 @@ struct dma_t {
 
 	pri void transfer() {
 		if (cycle % 2 == 0) {
-			bus.address = src;
+			bus.address = (src << 8) + cycle / 2;
 			bus.control = bus.read;
-			src++;
 			cycle++;
 		} else {
-			bus.address = dst;
+			bus.address = (dst << 8) + cycle / 2;
 			bus.control = bus.write;
-			dst++;
-			cnt--;
 			cycle++;
-			if (cnt == 0) cycle = -(i32)sizeof(fifo) + 1;
+			if (cycle / 2 >= 256) cycle = -(i32)sizeof(fifo);
 		}
 	}
 
 	pri void wait() {
 		if (bus.address == settings::dma_fifo && bus.control == bus.write) {
-			i32 i = cycle + 8;
+			i32 i = cycle + sizeof(fifo);
 			fifo[i] = bus.data;
 			cycle++;
 		}
