@@ -5,8 +5,7 @@
 #include "./cpu.h"
 #include "./disk_controller.h"
 #include "./dma.h"
-#include "./scratch_ram.h"
-#include "./video_controller.h"
+#include "./video.h"
 #include "./work_ram.h"
 
 #include "./screen.h"
@@ -25,9 +24,10 @@ struct computer_t {
 
 	pub void power_on() {
 		assert(!running);
+		boot_rom.power_on();
 		cpu.power_on();
 		dma.power_on();
-		video_controller.power_on();
+		video.power_on();
 		disk_controller.power_on();
 		screen.power_on();
 		running = true;
@@ -42,10 +42,9 @@ struct computer_t {
 		cpu.tick();
 		dma.tick();
 		byte_table.tick();
-		work_ram.tick();
 		boot_rom.tick();
-		scratch_ram.tick();
-		video_controller.tick();
+		//work_ram.tick();
+		video.tick();
 		disk_controller.tick();
 		screen.tick();
 	}
