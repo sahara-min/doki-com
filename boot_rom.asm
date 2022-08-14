@@ -25,9 +25,9 @@ load_logo_tiles:
   wri reg_dma_src_lo
   mov hi(logo_tiles)
   wri reg_dma_src_hi
-  mov 20
+  mov 00
   wri reg_dma_dst_lo
-  mov 10
+  mov 30
   wri reg_dma_dst_hi
   mov 00
   wri reg_dma_cnt_lo
@@ -36,35 +36,16 @@ load_logo_tiles:
   mov dma_cmd_cpy
   wri reg_dma_cmd
   
-  mov 21
+  mov 00
   wri reg_dma_dst_lo
-  mov 2C
+  mov 54
   wri reg_dma_dst_hi
-  mov 0E
+  mov 80
   wri reg_dma_cnt_lo
   mov 00
   wri reg_dma_cnt_hi
   mov dma_cmd_cpy
   wri reg_dma_cmd
-  
-  mov 41
-  wri reg_dma_dst_lo
-  mov 2C
-  wri reg_dma_dst_hi
-  mov 0E
-  wri reg_dma_cnt_lo
-  mov 00
-  wri reg_dma_cnt_hi
-  mov dma_cmd_cpy
-  wri reg_dma_cmd
-  
-  
-vblank_wait:
-  mov reg_gfx_status
-  shl 7
-  shr 7
-  neq 01
-  jmp vblank_wait
   
   mov gfx_enable
   wri reg_gfx_control
@@ -290,8 +271,11 @@ logo_tiles:
   '00AAAAA0'
   '00AAAAA0'
   '00BBBBB0'
-  
-logo_map:
 
-  01 03 05 03 07 09 0B 0D 0F 11 0F 13 15 17
-  02 04 06 04 08 0A 0C 0E 10 12 10 14 16 18
+logo_sprites:
+  52 00 00 40   5A 01 00 40
+  52 02 00 48   5A 03 00 48
+  
+  52 04 00 50   5A 05 00 50
+  52 02 00 58   5A 03 00 58
+  

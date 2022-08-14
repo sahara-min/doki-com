@@ -23,6 +23,15 @@ struct settings {
 	st cexp u16 boot_rom_base = 0x0200;
 	st cexp u16 boot_rom_size = 0x0D00;
 
-	st cexp u16 video_ram_base = 0x1000;
-	st cexp u16 video_ram_size = 0x2000;
+	st cexp u16 tileset_base = 0x1000;
+	st cexp u16 tileset_size = 0x2000;
+
+	st cexp u16 spriteset_base = 0x3000;
+	st cexp u16 spriteset_size = 0x2000;
+
+	st cexp u16 tilemap_base = 0x5000;
+	st cexp u16 tilemap_size = 0x0400;
+
+	st cexp u16 sprite_table_base = 0x5400;
+	st cexp u16 sprite_table_size = 0x0200;
 };
