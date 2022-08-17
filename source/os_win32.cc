@@ -6,6 +6,10 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#ifndef NDEBUG
+#include <cstdio>
+#endif
+
 #define WINDOW_CLASS_NAME "doki-window"
 #define WINDOW_STYLE (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
 
@@ -21,6 +25,7 @@ static HMODULE hgldll;
 static HANDLE hfile;
 static HANDLE hevent;
 static OVERLAPPED overlapped;
+static double time_delta;
 
 static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	static char filename[MAX_PATH];
@@ -89,6 +94,12 @@ int main() {
 
 	ShowWindow(hwnd, SW_SHOW);
 
+	LARGE_INTEGER frequency;
+	LARGE_INTEGER t_last;
+	LARGE_INTEGER t_now;
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&t_last);
+
 	MSG msg = { 0 };
 	while (true) {
 
@@ -99,6 +110,13 @@ int main() {
 		}
 
 		if (msg.message == WM_QUIT) break;
+
+		QueryPerformanceCounter(&t_now);
+		time_delta = (t_now.QuadPart - t_last.QuadPart) / (double)frequency.QuadPart;
+		t_last = t_now;
+#ifndef NDEBUG
+		printf("%f\n", time_delta);
+#endif
 
 		void application_update();
 		application_update();

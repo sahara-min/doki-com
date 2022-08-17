@@ -9,14 +9,22 @@ reg_dma_cnt_hi = 0105
 reg_dma_cmd    = 0106
 
 dma_cmd_cpy = 00
+dma_cmd_set = 01
 
 reg_gfx_control = 0108
 reg_gfx_status  = 0109
 
 gfx_enable = 01
 
-tileset_ram = 1000
-tilemap_ram = 2C00
+wram = 0800
+var_0 = 0900
+var_1 = 0901
+var_2 = 0902
+char_i = 0903
+offset_i = 0904
+
+spriteset = 3000
+sprite_table = 5400
 
 
 load_logo_tiles:
@@ -25,9 +33,9 @@ load_logo_tiles:
   wri reg_dma_src_lo
   mov hi(logo_tiles)
   wri reg_dma_src_hi
-  mov 00
+  mov lo(spriteset)
   wri reg_dma_dst_lo
-  mov 30
+  mov hi(spriteset)
   wri reg_dma_dst_hi
   mov 00
   wri reg_dma_cnt_lo
@@ -36,11 +44,30 @@ load_logo_tiles:
   mov dma_cmd_cpy
   wri reg_dma_cmd
   
+  mov F0
+  wri reg_dma_src_lo
   mov 00
+  wri reg_dma_src_hi
+  mov lo(sprite_table)
   wri reg_dma_dst_lo
-  mov 54
+  mov hi(sprite_table)
   wri reg_dma_dst_hi
-  mov 80
+  mov 00
+  wri reg_dma_cnt_lo
+  mov 02
+  wri reg_dma_cnt_hi
+  mov dma_cmd_set
+  wri reg_dma_cmd
+  
+  mov lo(logo_sprites)
+  wri reg_dma_src_lo
+  mov hi(logo_sprites)
+  wri reg_dma_src_hi
+  mov lo(wram)
+  wri reg_dma_dst_lo
+  mov hi(wram)
+  wri reg_dma_dst_hi
+  mov 70
   wri reg_dma_cnt_lo
   mov 00
   wri reg_dma_cnt_hi
@@ -49,10 +76,77 @@ load_logo_tiles:
   
   mov gfx_enable
   wri reg_gfx_control
-  
-loop:
-  jmp loop
 
+  clr char_i
+  clr offset_i
+  
+main_loop:
+.vblank_wait:
+  mov reg_gfx_status
+  shl 7
+  shr 7
+  neq 1
+  jmp .vblank_wait
+
+  mov 0
+  wri reg_gfx_status
+
+  mov lo(wram)
+  wri reg_dma_src_lo
+  mov hi(wram)
+  wri reg_dma_src_hi
+  mov lo(sprite_table)
+  wri reg_dma_dst_lo
+  mov hi(sprite_table)
+  wri reg_dma_dst_hi
+  mov 70
+  wri reg_dma_cnt_lo
+  mov 00
+  wri reg_dma_cnt_hi
+  mov dma_cmd_cpy
+  wri reg_dma_cmd
+
+  mov char_i
+  shl 4
+  wri var_0
+
+  mov 52
+  moi offset_i
+  sub y_offset_table
+  wri var_1
+  add 8
+  wri var_2
+
+  mov var_1
+  moi var_0
+  wri 0800
+
+  mov var_2
+  moi var_0
+  wri 0804
+
+  mov var_1
+  moi var_0
+  wri 0808
+
+  mov var_2
+  moi var_0
+  wri 080C
+
+  inc offset_i
+  mov offset_i
+  neq 8
+  jmp main_loop
+
+  clr offset_i
+  inc char_i
+
+  mov 7
+  neq char_i
+  jmp main_loop
+
+lock:
+  jmp lock
 
 logo_tiles:
 
@@ -273,9 +367,28 @@ logo_tiles:
   '00BBBBB0'
 
 logo_sprites:
-  52 00 00 40   5A 01 00 40
-  52 02 00 48   5A 03 00 48
+
+  F0 00 00 40   F0 01 00 40
+  F0 02 00 48   F0 03 00 48
   
-  52 04 00 50   5A 05 00 50
-  52 02 00 58   5A 03 00 58
+  F0 04 00 50   F0 05 00 50
+  F0 02 00 58   F0 03 00 58
   
+  F0 06 00 60   F0 07 00 60
+  F0 08 00 68   F0 09 00 68
+  
+  F0 0A 00 70   F0 0B 00 70
+  F0 0C 00 78   F0 0D 00 78
+  
+  F0 0E 00 80   F0 0F 00 80
+  F0 10 00 88   F0 11 00 88
+  
+  F0 0E 00 90   F0 0F 00 90
+  F0 12 00 98   F0 13 00 98
+  
+  F0 14 00 A0   F0 15 00 A0
+  F0 16 00 A8   F0 17 00 A8
+  
+y_offset_table:
+  1 2 3 4 3 2 1 0
+

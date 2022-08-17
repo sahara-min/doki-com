@@ -17,11 +17,14 @@ struct settings {
 	st cexp u16 video_reg_base = 0x0108;
 	st cexp u16 video_reg_size = 0x0002;
 
-	st cexp u16 work_ram_base = 0x0200;
-	st cexp u16 work_ram_size = 0x0D00;
+	st cexp u16 disk_reg_base = 0x01F0;
+	st cexp u16 disk_reg_size = 0x0002;
 
 	st cexp u16 boot_rom_base = 0x0200;
-	st cexp u16 boot_rom_size = 0x0D00;
+	st cexp u16 boot_rom_size = 0x0600;
+
+	st cexp u16 work_ram_base = 0x0800;
+	st cexp u16 work_ram_size = 0x0800;
 
 	st cexp u16 tileset_base = 0x1000;
 	st cexp u16 tileset_size = 0x2000;

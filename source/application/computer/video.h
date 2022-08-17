@@ -68,11 +68,11 @@ struct video_t {
 
 	pub void tick() {
 
-		reg_status = row >= settings::screen_height && row < 260;
 		output = bg_color;
 
 		handle_reg_control_writes();
 		handle_reg_status_reads();
+		handle_reg_status_acknowledges();
 		if (!enabled || row >= settings::screen_height)
 			handle_vram_writes();
 
@@ -136,6 +136,10 @@ struct video_t {
 			sprite_count = 0;
 			col = 0;
 			row++;
+			if (row == 180)
+				reg_status |= 0b00000001;
+			if (row == 260)
+				reg_status &= 0b11111110;
 			if (row == 262) {
 				enabled = reg_control & 0b00000001;
 				bg_color = reg_control >> 4;
@@ -152,6 +156,11 @@ struct video_t {
 	pri void handle_reg_status_reads() {
 		if (bus.address == settings::video_reg_base + 1 && bus.control == bus.read)
 			bus.data = reg_status;
+	}
+
+	pri void handle_reg_status_acknowledges() {
+		if (bus.address == settings::video_reg_base + 1 && bus.control == bus.write && (bus.data & 0b1) == 0)
+			reg_status &= 0b11111110;
 	}
 
 	pri void handle_vram_writes() {

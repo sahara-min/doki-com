@@ -3,11 +3,10 @@
 #include "./bus.h"
 #include "./byte_table.h"
 #include "./cpu.h"
-#include "./disk_controller.h"
+#include "./disk.h"
 #include "./dma.h"
 #include "./video.h"
 #include "./work_ram.h"
-
 #include "./screen.h"
 
 struct computer_t {
@@ -28,7 +27,7 @@ struct computer_t {
 		cpu.power_on();
 		dma.power_on();
 		video.power_on();
-		disk_controller.power_on();
+		disk.power_on();
 		screen.power_on();
 		running = true;
 	}
@@ -43,9 +42,9 @@ struct computer_t {
 		dma.tick();
 		byte_table.tick();
 		boot_rom.tick();
-		//work_ram.tick();
+		work_ram.tick();
 		video.tick();
-		disk_controller.tick();
+		disk.tick();
 		screen.tick();
 	}
 };

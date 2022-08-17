@@ -35,7 +35,7 @@ struct dma_t {
 		if (cycle % 2 == 0) {
 			bus.address = src;
 			bus.control = bus.read;
-			src++;
+			if ((cmd & 1) == 0) src++;
 			cycle++;
 		} else {
 			bus.address = dst;
