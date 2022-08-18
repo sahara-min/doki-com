@@ -16,6 +16,15 @@ reg_gfx_status  = 0109
 
 gfx_enable = 01
 
+reg_disk_fifo = 01F0
+reg_disk_status = 01F1
+
+disk_cmd_read = 00
+disk_cmd_write = 01
+disk_cmd_seek = 02
+
+disk_status_ready = 01
+
 wram = 0800
 var_0 = 0900
 var_1 = 0901
@@ -145,8 +154,24 @@ main_loop:
   neq char_i
   jmp main_loop
 
-lock:
-  jmp lock
+read_disk_boot_sector:
+  clr var_0
+.read_loop:
+  mov disk_cmd_read
+  wri reg_disk_fifo
+.wait_loop:
+  mov reg_disk_status
+  neq disk_status_ready
+  jmp .wait_loop
+  mov reg_disk_fifo
+  moi var_0
+  wri wram
+  inc var_0
+  mov var_0
+  neq 0
+  jmp .read_loop
+  jmp wram
+
 
 logo_tiles:
 
@@ -390,5 +415,5 @@ logo_sprites:
   F0 16 00 A8   F0 17 00 A8
   
 y_offset_table:
-  1 2 3 4 3 2 1 0
+  1 2 3 3 2 1 0 0
 

@@ -33,6 +33,10 @@ struct cpu_t {
 			return;
 		}
 
+		if (pc == 0x0800) {
+			pc = pc;
+		}
+
 		switch (cy) {
 		case 0:
 			fetch_next();
