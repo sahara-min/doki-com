@@ -33,7 +33,7 @@ struct cpu_t {
 			return;
 		}
 
-		if (pc == 0x0800) {
+		if (pc == 0x0400) {
 			pc = pc;
 		}
 
@@ -86,7 +86,7 @@ struct cpu_t {
 			case 0xC: write(op + i, bus.data + 1); break; // inc
 			case 0xD: write(op + i, bus.data - 1); break; // dec
 			case 0xE: break; // jmp
-			case 0xF: write(op + i, 0xB0 | hi(pc + 1)); break; // call
+			case 0xF: write(op + i + 1, 0xE0 | hi(pc + 1)); break; // call
 			}
 			break;
 		case 4:

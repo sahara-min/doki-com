@@ -35,12 +35,12 @@ struct dma_t {
 		if (cycle % 2 == 0) {
 			bus.address = src;
 			bus.control = bus.read;
-			if ((cmd & 1) == 0) src++;
+			if (!(cmd & 0b00000001)) src++;
 			cycle++;
 		} else {
 			bus.address = dst;
 			bus.control = bus.write;
-			dst++;
+			if (!(cmd & 0b00000010)) dst++;
 			cnt--;
 			cycle++;
 			if (cnt == 0) {
@@ -60,6 +60,11 @@ struct dma_t {
 			if (bus.control == bus.read) bus.data = 0;
 			if (bus.control == bus.write) {
 				cmd = bus.data;
+				if (cmd & 0b00000100) {
+					src &= 0xFF00;
+					dst &= 0xFF00;
+					cnt &= 0xFF00;
+				}
 				cycle = 0;
 			}
 		}

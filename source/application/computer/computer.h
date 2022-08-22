@@ -1,5 +1,5 @@
 #pragma once
-#include "./boot_rom.h"
+#include "./bios_rom.h"
 #include "./bus.h"
 #include "./byte_table.h"
 #include "./cpu.h"
@@ -23,7 +23,7 @@ struct computer_t {
 
 	pub void power_on() {
 		assert(!running);
-		boot_rom.power_on();
+		bios_rom.power_on();
 		cpu.power_on();
 		dma.power_on();
 		video.power_on();
@@ -41,7 +41,7 @@ struct computer_t {
 		cpu.tick();
 		dma.tick();
 		byte_table.tick();
-		boot_rom.tick();
+		bios_rom.tick();
 		work_ram.tick();
 		video.tick();
 		disk.tick();
