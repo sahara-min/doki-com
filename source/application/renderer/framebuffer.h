@@ -1,4 +1,5 @@
 #pragma once
+#include "application/constants.h"
 #include "application/settings.h"
 
 struct framebuffer_t {
@@ -11,8 +12,8 @@ struct framebuffer_t {
 	pub void screen() {
 		texture_id = 0;
 		buffer_id = 0;
-		width_ = settings::screen_scale * settings::screen_width;
-		height_ = settings::screen_scale * settings::screen_height;
+		width_ = settings.scale * constants::screen_width;
+		height_ = settings.scale * constants::screen_height;
 	}
 
 	pub void allocate(i32 width, i32 height) {
@@ -68,6 +69,10 @@ struct framebuffer_t {
 	pub void target() {
 		gl.BindTexture(gl.GL_TEXTURE_2D, 0);
 		gl.BindFramebuffer(gl.GL_FRAMEBUFFER, buffer_id);
+		if (buffer_id == 0) {
+			width_ = settings.scale * constants::screen_width;
+			height_ = settings.scale * constants::screen_height;
+		}
 		gl.Viewport(0, 0, width_, height_);
 	}
 };

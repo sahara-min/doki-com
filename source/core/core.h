@@ -54,6 +54,47 @@ struct window_t {
 st window_t window;
 
 // ---------------------------------------------------------------------------
+// Menu
+
+struct menu_t {
+
+	pub void add_item(i32 id, cstring string) {
+		void os_add_menu_item(i32 id, cstring string);
+		os_add_menu_item(id, string);
+	}
+
+	pub void add_separator() {
+		void os_add_menu_separator();
+		os_add_menu_separator();
+	}
+
+	pub i32 get_result() {
+		long os_get_menu_result();
+		return os_get_menu_result();
+	}
+};
+
+st menu_t menu;
+
+// ---------------------------------------------------------------------------
+// Config
+
+struct config_t {
+
+	pub i32 read(cstring key, i32 default_value) {
+		long os_read_config(const char* key, long default_value);
+		return os_read_config(key, default_value);
+	}
+
+	pub void write(cstring key, i32 value) {
+		void os_write_config(const char* key, long value);
+		os_write_config(key, value);
+	}
+};
+
+st config_t config;
+
+// ---------------------------------------------------------------------------
 // File
 
 struct file_t {

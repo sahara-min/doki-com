@@ -1,11 +1,11 @@
 #pragma once
 #include "./bus.h"
-#include "application/settings.h"
+#include "application/constants.h"
 
 struct disk_t {
 
-	pri st cexp u16 reg_fifo = settings::disk_reg_base + 0;
-	pri st cexp u16 reg_status = settings::disk_reg_base + 1;
+	pri st cexp u16 reg_fifo = constants::disk_reg_base + 0;
+	pri st cexp u16 reg_status = constants::disk_reg_base + 1;
 
 	pri st cexp u8 cmd_read = 0;
 	pri st cexp u8 cmd_write = 1;

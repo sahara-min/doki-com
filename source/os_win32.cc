@@ -22,14 +22,25 @@ static HWND hwnd;
 static HDC hdc;
 static HGLRC hrc;
 static HMODULE hgldll;
+static HMENU hmenu;
+static HKEY hkey;
 static HANDLE hfile;
 static HANDLE hevent;
 static OVERLAPPED overlapped;
+static long menu_result;
 static double time_delta;
 
 static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	static char filename[MAX_PATH];
 	switch (msg) {
+	case WM_RBUTTONDOWN:
+		POINT p;
+		p.x = LOWORD(lparam);
+		p.y = HIWORD(lparam);
+		ClientToScreen(hwnd, &p);
+		menu_result = TrackPopupMenu(hmenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD, p.x, p.y, 0, hwnd, NULL);
+		menu_result--;
+		return 0;
 	case WM_DROPFILES:
 		DragQueryFileA((HDROP)wparam, 0, filename, sizeof(filename));
 		CloseHandle(hfile);
@@ -43,6 +54,8 @@ static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 	case WM_CLOSE:
 		CloseHandle(hevent);
 		CloseHandle(hfile);
+		RegCloseKey(hkey);
+		DestroyMenu(hmenu);
 		wglDeleteContext(hrc);
 		ReleaseDC(hwnd, hdc);
 		DestroyWindow(hwnd);
@@ -57,16 +70,21 @@ static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 int main() {
 
 	hgldll = GetModuleHandleA("opengl32.dll");
+	hmenu = CreatePopupMenu();
+	RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\DokiCom", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_QUERY_VALUE, NULL, &hkey, NULL);
 	hfile = INVALID_HANDLE_VALUE;
 	hevent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	menu_result = -1;
 	
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+	HMODULE hinstance = GetModuleHandle(NULL);
 
 	WNDCLASS wc = { 0 };
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC /*| CS_DBLCLKS*/;
 	wc.lpfnWndProc = window_proc;
-	wc.hInstance = GetModuleHandle(NULL);
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	wc.hInstance = hinstance;
+	wc.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(101));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpszClassName = WINDOW_CLASS_NAME;
 	RegisterClass(&wc);
@@ -120,6 +138,7 @@ int main() {
 
 		void application_update();
 		application_update();
+		menu_result = -1;
 		SwapBuffers(hdc);
 	}
 
@@ -144,6 +163,29 @@ void os_set_window_size(long width, long height) {
 	long y = max(0, desktop_rect.bottom / 2 - h / 2);
 
 	SetWindowPos(hwnd, NULL, x, y, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
+}
+
+void os_add_menu_item(long id, const char* string) {
+	AppendMenuA(hmenu, MF_STRING, (UINT_PTR)id + 1, string);
+}
+
+void os_add_menu_separator() {
+	AppendMenuA(hmenu, MF_SEPARATOR, 0, 0);
+}
+
+long os_get_menu_result() {
+	return menu_result;
+}
+
+long os_read_config(const char* key, long default_value) {
+	long result = default_value;
+	DWORD size = sizeof(result);
+	RegGetValueA(hkey, NULL, key, RRF_RT_REG_DWORD, NULL, &result, &size);
+	return result;
+}
+
+void os_write_config(const char* key, long value) {
+	RegSetValueExA(hkey, key, 0, REG_DWORD, (BYTE*)&value, sizeof(value));
 }
 
 bool os_file_dropped() {

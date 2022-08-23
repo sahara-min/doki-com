@@ -1,7 +1,7 @@
 #pragma once
 #include "./bus.h"
 #include "./video_signal.h"
-#include "application/settings.h"
+#include "application/constants.h"
 
 struct video_t {
 
@@ -29,10 +29,10 @@ struct video_t {
 
 	pri union {
 		struct {
-			u8 tileset[settings::tileset_size];
-			u8 spriteset[settings::spriteset_size];
-			u8 tilemap[settings::tilemap_size];
-			u8 sprite_table[settings::sprite_table_size];
+			u8 tileset[constants::tileset_size];
+			u8 spriteset[constants::spriteset_size];
+			u8 tilemap[constants::tilemap_size];
+			u8 sprite_table[constants::sprite_table_size];
 		};
 		u8 vram[0x5000];
 	};
@@ -73,12 +73,12 @@ struct video_t {
 		handle_reg_control_writes();
 		handle_reg_status_reads();
 		handle_reg_status_acknowledges();
-		if (!enabled || row >= settings::screen_height)
+		if (!enabled || row >= constants::screen_height)
 			handle_vram_writes();
 
-		if (enabled && row < settings::screen_height && col < 128 && sprite_count < 16) {
+		if (enabled && row < constants::screen_height && col < 128 && sprite_count < 16) {
 			i32 i = 4 * col;
-			u8 y = row - sprite_table[i + 0];
+			u8 y = (u8)(row - sprite_table[i + 0]);
 			
 			if (y >= 0 && y < 8) {
 				u8 tile = sprite_table[i + 1];
@@ -93,8 +93,8 @@ struct video_t {
 			}
 		}
 
-		if (enabled && row < settings::screen_height && col >= 128 && col < 256) {
-			u8 sprite = (col - 128) / 8;
+		if (enabled && row < constants::screen_height && col >= 128 && col < 256) {
+			u8 sprite = (u8)((col - 128) / 8);
 			if (sprite < sprite_count) {
 				u16 i = sprite_i[sprite];
 				u8 x = sprite_x[sprite];
@@ -106,7 +106,7 @@ struct video_t {
 			}
 		}
 
-		if (enabled && row < settings::screen_height && col < settings::screen_width) {
+		if (enabled && row < constants::screen_height && col < constants::screen_width) {
 			i32 mx = col >> 3;
 			i32 my = row >> 3;
 			i32 ts = col & 0x1;
@@ -149,22 +149,22 @@ struct video_t {
 	}
 
 	pri void handle_reg_control_writes() {
-		if (bus.address == settings::video_reg_base && bus.control == bus.write)
+		if (bus.address == constants::video_reg_base && bus.control == bus.write)
 			reg_control = bus.data;
 	}
 
 	pri void handle_reg_status_reads() {
-		if (bus.address == settings::video_reg_base + 1 && bus.control == bus.read)
+		if (bus.address == constants::video_reg_base + 1 && bus.control == bus.read)
 			bus.data = reg_status;
 	}
 
 	pri void handle_reg_status_acknowledges() {
-		if (bus.address == settings::video_reg_base + 1 && bus.control == bus.write && (bus.data & 0b1) == 0)
+		if (bus.address == constants::video_reg_base + 1 && bus.control == bus.write && (bus.data & 0b1) == 0)
 			reg_status &= 0b11111110;
 	}
 
 	pri void handle_vram_writes() {
-		u16 i = bus.address - settings::tileset_base;
+		u16 i = bus.address - constants::tileset_base;
 		if (i < sizeof(vram) && bus.control == bus.write)
 			vram[i] = bus.data;
 	}

@@ -9,6 +9,7 @@ dma_cnt_hi = 105
 dma_start  = 106
 
 video_control = 108
+video_status = 109
 
 disk_fifo   = 1F0
 disk_status = 1F1
@@ -74,6 +75,21 @@ read_disk_boot_sector:
   neq 0
   jmp .loop
   
+wait_2s:
+  clr i
+.loop:
+.wait_vblank:
+  mov video_status
+  shl 7
+  neq 80
+  jmp .wait_vblank
+  clr video_status
+  inc i
+  mov i
+  neq 80
+  jmp .loop
+
+done:
   jmp end
 
 
@@ -162,6 +178,13 @@ logo_sprite_attr:
   56 07 00 9A
 
 padding:
+  '00000000000000000000000000000000'
+  '00000000000000000000000000000000'
+  '00000000000000000000000000000000'
+  '00000000000000000000000000000000'
+  '00000000000000000000000000000000'
+  '00000000000000000000000000000000'
+  '0000000000000000000000000000'
 
 end:
   mov 1

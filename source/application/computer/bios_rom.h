@@ -1,14 +1,14 @@
 #pragma once
 #include "./bus.h"
-#include "application/settings.h"
+#include "application/constants.h"
 
 struct bios_rom_t {
 
-	pri st cexp u8 boot_code[settings::boot_rom_size] = {
+	pri st cexp u8 boot_code[constants::boot_rom_size] = {
 #include "./boot_code.inl"
 	};
 
-	pri st cexp u8 bios_code[settings::boot_rom_size] = {
+	pri st cexp u8 bios_code[constants::boot_rom_size] = {
 #include "./bios_code.inl"
 	};
 
@@ -21,9 +21,9 @@ struct bios_rom_t {
 
 	pub void tick() {
 
-		u16 i = bus.address - settings::boot_rom_base;
+		u16 i = bus.address - constants::boot_rom_base;
 
-		if (i < settings::boot_rom_size) {
+		if (i < constants::boot_rom_size) {
 			if (bus.control == bus.read) bus.data = memory[i];
 			if (bus.control == bus.write) bios_return[i & 1] = bus.data;
 		}

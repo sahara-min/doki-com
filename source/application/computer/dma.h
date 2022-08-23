@@ -1,12 +1,12 @@
 #pragma once
 #include "./bus.h"
-#include "application/settings.h"
+#include "application/constants.h"
 
 struct dma_t {
 
 	pri union {
 		struct { u16 src, dst, cnt, cmd; };
-		u8 regs[settings::dma_reg_size];
+		u8 regs[constants::dma_reg_size];
 	};
 	pri i16 cycle;
 
@@ -51,7 +51,7 @@ struct dma_t {
 	}
 
 	pri void wait() {
-		u16 i = bus.address - settings::dma_reg_base;
+		u16 i = bus.address - constants::dma_reg_base;
 		if (i < 6) {
 			if (bus.control == bus.read) bus.data = regs[i];
 			if (bus.control == bus.write) regs[i] = bus.data;

@@ -1,6 +1,6 @@
 #pragma once
 #include "./bus.h"
-#include "application/settings.h"
+#include "application/constants.h"
 
 struct cpu_t {
 
@@ -15,7 +15,7 @@ struct cpu_t {
 	pri i16 op;
 
 	pub void power_on() {
-		pc = settings::boot_rom_base;
+		pc = constants::boot_rom_base;
 		i = 0x00;
 		a = 0x00;
 

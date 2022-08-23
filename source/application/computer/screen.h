@@ -1,10 +1,10 @@
 #pragma once
 #include "./video_signal.h"
-#include "application/settings.h"
+#include "application/constants.h"
 
 struct screen_t {
 
-	pri r32 image_[3 * settings::screen_width * settings::screen_height];
+	pri r32 image_[3 * constants::screen_width * constants::screen_height];
 	pri i32 row;
 	pri i32 col;
 
@@ -18,10 +18,10 @@ struct screen_t {
 	}
 
 	pub void tick() {
-		if (row < settings::screen_height && col < settings::screen_width) {
-			image_[(row * settings::screen_width + col) * 3 + 0] = video_signal.r;
-			image_[(row * settings::screen_width + col) * 3 + 1] = video_signal.g;
-			image_[(row * settings::screen_width + col) * 3 + 2] = video_signal.b;
+		if (row < constants::screen_height && col < constants::screen_width) {
+			image_[(row * constants::screen_width + col) * 3 + 0] = video_signal.r;
+			image_[(row * constants::screen_width + col) * 3 + 1] = video_signal.g;
+			image_[(row * constants::screen_width + col) * 3 + 2] = video_signal.b;
 		}
 		col++;
 		if (col >= 300) {

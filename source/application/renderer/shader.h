@@ -5,7 +5,6 @@ struct shader_t {
 
 	pro u32 program_id;
 	pro i32 position_loc;
-	pro i32 texcoord_loc;
 
 	pub void compile(cstring source) {
 
@@ -38,16 +37,13 @@ struct shader_t {
 			return;
 
 		position_loc = gl.GetAttribLocation(p, "position");
-		texcoord_loc = gl.GetAttribLocation(p, "texcoord");
 
 		program_id = p;
 	}
 
 	pub void use() {
 		gl.UseProgram(program_id);
-		gl.VertexAttribPointer(position_loc, 3, gl.GL_FLOAT, false, 20, (void*)0);
-		gl.VertexAttribPointer(texcoord_loc, 2, gl.GL_FLOAT, false, 20, (void*)12);
+		gl.VertexAttribPointer(position_loc, 2, gl.GL_FLOAT, false, 8, (void*)0);
 		gl.EnableVertexAttribArray(position_loc);
-		gl.EnableVertexAttribArray(texcoord_loc);
 	}
 };
