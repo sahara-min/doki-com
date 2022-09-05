@@ -35,7 +35,6 @@ struct computer_t {
 	}
 
 	pub void run_frame() {
-		assert(running);
 		for (i32 i = 0; i < 300 * 262; i++) tick();
 	}
 

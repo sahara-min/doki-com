@@ -1,11 +1,5 @@
 #pragma once
 
-#ifdef NDEBUG
-#define assert(cond)
-#else
-#define assert(cond) if (!cond) throw 0;
-#endif
-
 #define st static
 #define cexp constexpr
 #define ceva consteval
