@@ -37,8 +37,6 @@ struct renderer_t {
 		signal_texture.clamp_to_border();
 
 		screen_buffer.screen();
-
-		gl.Enable(gl.GL_TEXTURE_2D);
 	}
 
 	pub void update() {

@@ -3,7 +3,6 @@
 
 st cexp cstring shader_crt_source = R"delim(
 
-#define PI 3.1415926535897932384626433832795
 #define VIEW vec2(240, 180)
 
 #if defined(VERTEX)
@@ -36,16 +35,12 @@ void main(void) {
 
 struct shader_crt_t : shader_t {
 
-	i32 signal_loc;
-
 	pub void compile() {
 		shader_t::compile(shader_crt_source);
-		signal_loc = gl.GetUniformLocation(program_id, "signal");
 	}
 
 	pub void use() {
 		shader_t::use();
-		gl.Uniform1i(signal_loc, 0);
 	}
 };
 

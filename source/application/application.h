@@ -46,7 +46,7 @@ struct application_t {
 	}
 
 	pri void handle_menu_result() {
-		i32 r = menu.get_result();
+		i32 r = menu.result();
 		if (r == 0)
 			computer.power_on();
 		if (r >= 2 && r <= 8)

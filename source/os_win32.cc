@@ -193,11 +193,11 @@ int main() {
 	ExitProcess(0);
 }
 
-void os_set_window_title(const char* title) {
+void os_window_set_title(const char* title) {
 	SetWindowText(hwnd, title);
 }
 
-void os_set_window_size(long width, long height) {
+void os_window_set_size(long width, long height) {
 
 	RECT window_rect = { 0, 0, width, height };
 	AdjustWindowRect(&window_rect, WINDOW_STYLE, false);
@@ -213,34 +213,34 @@ void os_set_window_size(long width, long height) {
 	SetWindowPos(hwnd, NULL, x, y, w, h, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void os_add_menu_item(long id, const char* string) {
+void os_menu_add_item(long id, const char* string) {
 	AppendMenuA(hmenu, MF_STRING, (UINT_PTR)id + 1, string);
 }
 
-void os_add_menu_separator() {
+void os_menu_add_separator() {
 	AppendMenuA(hmenu, MF_SEPARATOR, 0, 0);
 }
 
-void os_set_menu_enabled(long id, bool enabled) {
+void os_menu_set_enabled(long id, bool enabled) {
 	EnableMenuItem(hmenu, id + 1, enabled ? MF_ENABLED : MF_DISABLED);
 }
 
-void os_set_menu_item_checked(long id, bool checked) {
+void os_menu_set_checked(long id, bool checked) {
 	CheckMenuItem(hmenu, id + 1, checked ? MF_CHECKED : MF_UNCHECKED);
 }
 
-long os_get_menu_result() {
+long os_menu_result() {
 	return menu_result;
 }
 
-long os_read_config(const char* key, long default_value) {
+long os_config_read(const char* key, long default_value) {
 	long result = default_value;
 	DWORD size = sizeof(result);
 	RegGetValueA(hkey, NULL, key, RRF_RT_REG_DWORD, NULL, &result, &size);
 	return result;
 }
 
-void os_write_config(const char* key, long value) {
+void os_config_write(const char* key, long value) {
 	RegSetValueExA(hkey, key, 0, REG_DWORD, (BYTE*)&value, sizeof(value));
 }
 
@@ -256,7 +256,7 @@ bool os_input_key_is_down(unsigned char key) {
 	return key_matrix[key];
 }
 
-void os_init_gl(long major_version, long minor_version) {
+void os_gl_init(long major_version, long minor_version) {
 
 	HGLRC temp_hrc = wglCreateContext(hdc);
 	wglMakeCurrent(hdc, temp_hrc);
@@ -280,7 +280,7 @@ void os_init_gl(long major_version, long minor_version) {
 	wglSwapIntervalEXT(1);
 }
 
-void* os_get_gl_proc(const char* name) {
+void* os_gl_proc(const char* name) {
 	FARPROC proc = GetProcAddress(hgldll, name);
 	if (proc) return (void*)proc;
 	return (void*)wglGetProcAddress(name);
