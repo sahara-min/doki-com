@@ -11,7 +11,6 @@ struct cpu_t {
 	pri u8 i;
 	pri u8 a;
 	
-
 	pri i8 cy;
 	pri i8 oc;
 	pri i16 op;
@@ -22,7 +21,6 @@ struct cpu_t {
 		i = 0x00;
 		a = 0x00;
 		
-
 		cy = 0;
 		oc = 0x00;
 		op = 0x000;
@@ -35,10 +33,6 @@ struct cpu_t {
 		if (bus.halt) {
 			bus.halt = 0;
 			return;
-		}
-
-		if (pc == 0x0400) {
-			pc = pc;
 		}
 
 		switch (cy) {
