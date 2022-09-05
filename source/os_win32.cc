@@ -24,14 +24,42 @@ static HGLRC hrc;
 static HMODULE hgldll;
 static HMENU hmenu;
 static HKEY hkey;
-static HANDLE hfile;
-static HANDLE hevent;
-static OVERLAPPED overlapped;
 static long menu_result;
-static double time_delta;
+static BYTE file_buffer[256 * 1024];
+static bool file_is_read;
+static bool shift_held;
+static bool control_held;
+static bool alt_held;
+static bool key_matrix[256];
+
+static bool key_down_vk(int vk) {
+	return (GetAsyncKeyState(vk) & 0x8000) != 0;
+}
+
+static bool key_down_ch(char ch) {
+	SHORT r = VkKeyScanA(ch);
+	int vk = r & 0x00FF;
+	bool shift = (r & 0x0100) != 0;
+	bool control = (r & 0x0200) != 0;
+	bool alt = (r & 0x0400) != 0;
+	if (shift && !shift_held) return false;
+	if (control && !control_held) return false;
+	if (alt && !alt_held) return false;
+	return key_down_vk(vk);
+}
+
+static void read_file(LPCWSTR filename) {
+	HANDLE hfile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	DWORD file_size = GetFileSize(hfile, NULL);
+	DWORD bytes_read;
+	if (ReadFile(hfile, file_buffer, min(file_size, sizeof(file_buffer)), &bytes_read, NULL))
+		file_is_read = true;
+	CloseHandle(hfile);
+}
 
 static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-	static char filename[MAX_PATH];
+	static wchar_t filename[MAX_PATH];
+	
 	switch (msg) {
 	case WM_RBUTTONDOWN:
 		POINT p;
@@ -42,18 +70,11 @@ static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 		menu_result--;
 		return 0;
 	case WM_DROPFILES:
-		DragQueryFileA((HDROP)wparam, 0, filename, sizeof(filename));
-		CloseHandle(hfile);
-		hfile = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
-		overlapped.Internal = 0;
-		overlapped.InternalHigh = 0;
-		overlapped.Offset = -1;
-		overlapped.OffsetHigh = 0;
-		overlapped.hEvent = hevent;
+		DragQueryFileW((HDROP)wparam, 0, filename, sizeof(filename) - 1);
+		read_file(filename);
+		SetFocus(hwnd);
 		return 0;
 	case WM_CLOSE:
-		CloseHandle(hevent);
-		CloseHandle(hfile);
 		RegCloseKey(hkey);
 		DestroyMenu(hmenu);
 		wglDeleteContext(hrc);
@@ -72,9 +93,13 @@ int main() {
 	hgldll = GetModuleHandleA("opengl32.dll");
 	hmenu = CreatePopupMenu();
 	RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\DokiCom", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_QUERY_VALUE, NULL, &hkey, NULL);
-	hfile = INVALID_HANDLE_VALUE;
-	hevent = CreateEventA(NULL, FALSE, FALSE, NULL);
 	menu_result = -1;
+	file_is_read = false;
+
+	int argc = 0;
+	LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	if (argc > 1)
+		read_file(argv[1]);
 	
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
@@ -115,11 +140,27 @@ int main() {
 	LARGE_INTEGER frequency;
 	LARGE_INTEGER t_last;
 	LARGE_INTEGER t_now;
+	LARGE_INTEGER t_add;
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&t_last);
 
 	MSG msg = { 0 };
 	while (true) {
+		QueryPerformanceCounter(&t_now);
+		double dt = (t_now.QuadPart - t_last.QuadPart) / (double)frequency.QuadPart;
+		if (dt < 0.014) {
+			while (true) {
+				QueryPerformanceCounter(&t_add);
+				double dt = (t_add.QuadPart - t_last.QuadPart) / (double)frequency.QuadPart;
+				if (dt >= 0.016)
+					break;
+			}
+		}
+
+#ifndef NDEBUG
+		printf("%f\n", dt);
+#endif
+		t_last = t_now;
 
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
@@ -128,13 +169,20 @@ int main() {
 		}
 
 		if (msg.message == WM_QUIT) break;
-
-		QueryPerformanceCounter(&t_now);
-		time_delta = (t_now.QuadPart - t_last.QuadPart) / (double)frequency.QuadPart;
-		t_last = t_now;
-#ifndef NDEBUG
-		printf("%f\n", time_delta);
-#endif
+		
+		shift_held = key_down_vk(VK_SHIFT);
+		control_held = key_down_vk(VK_CONTROL);
+		alt_held = key_down_vk(VK_RMENU);
+		for (int i = 0x00; i <= 0x09; i++)
+			key_matrix[i] = key_down_ch('0' + i);
+		for (int i = 0x0A; i <= 0x23; i++)
+			key_matrix[i] = key_down_ch('A' + i - 0x0A) || key_down_ch('a' + i - 0x0A);
+		static char symbols[] = "_ .,:;!?'\"#@+-*/%&|=<>()[]{}";
+		for (int i = 0x24; i <= 0x3F; i++)
+			key_matrix[i] = key_down_ch(symbols[i - 0x24]);
+		static int special[] = { VK_RETURN, VK_TAB, VK_BACK, VK_DELETE, VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN };
+		for (int i = 0x40; i <= 0x47; i++)
+			key_matrix[i] = key_down_vk(special[i - 0x40]);
 
 		void application_update();
 		application_update();
@@ -173,6 +221,14 @@ void os_add_menu_separator() {
 	AppendMenuA(hmenu, MF_SEPARATOR, 0, 0);
 }
 
+void os_set_menu_enabled(long id, bool enabled) {
+	EnableMenuItem(hmenu, id + 1, enabled ? MF_ENABLED : MF_DISABLED);
+}
+
+void os_set_menu_item_checked(long id, bool checked) {
+	CheckMenuItem(hmenu, id + 1, checked ? MF_CHECKED : MF_UNCHECKED);
+}
+
 long os_get_menu_result() {
 	return menu_result;
 }
@@ -188,18 +244,16 @@ void os_write_config(const char* key, long value) {
 	RegSetValueExA(hkey, key, 0, REG_DWORD, (BYTE*)&value, sizeof(value));
 }
 
-bool os_file_dropped() {
-	return hfile != INVALID_HANDLE_VALUE;
+bool os_file_is_read() {
+	return file_is_read;
 }
 
-bool os_file_read(void* buffer, long count) {
-	overlapped.Offset++;
-	return ReadFile(hfile, buffer, (DWORD)count, NULL, &overlapped);
+unsigned char* os_file_data() {
+	return file_buffer;
 }
 
-bool os_file_is_ready() {
-	DWORD dummy;
-	return GetOverlappedResult(hfile, &overlapped, &dummy, FALSE);
+bool os_input_key_is_down(unsigned char key) {
+	return key_matrix[key];
 }
 
 void os_init_gl(long major_version, long minor_version) {

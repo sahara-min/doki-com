@@ -10,7 +10,7 @@ struct application_t {
 		
 		settings.scale = config.read("scale", constants::default_scale);
 
-		window.set_title("DOKI-COM");
+		window.set_title("DOKICOM");
 		update_window_size();
 		
 		menu.add_item(0, "Reset");
@@ -19,6 +19,12 @@ struct application_t {
 		menu.add_item(4, "4x");
 		menu.add_item(6, "6x");
 		menu.add_item(8, "8x");
+		menu.add_separator();
+		menu.add_item(99, "Version: Midori (0.1.0)");
+
+		menu.set_enabled(0, false);
+		menu.set_enabled(99, false);
+		menu.set_checked(settings.scale, true);
 		
 		renderer.init();
 		computer.init();
@@ -28,8 +34,9 @@ struct application_t {
 
 		handle_menu_result();
 
-		if (file.dropped() && !computer.is_running()) {
+		if (file.is_read() && !computer.is_running()) {
 			computer.power_on();
+			menu.set_enabled(0, true);
 		}
 
 		if (computer.is_running()) {
@@ -40,14 +47,15 @@ struct application_t {
 
 	pri void handle_menu_result() {
 		i32 r = menu.get_result();
-
-		if (r >= 2 && r <= 8) {
+		if (r == 0)
+			computer.power_on();
+		if (r >= 2 && r <= 8)
 			update_window_scale(r);
-			return;
-		}
 	}
 
 	pri void update_window_scale(i32 scale) {
+		for (i32 i = 2; i <= 8; i += 2)
+			menu.set_checked(i, i == scale);
 		settings.scale = scale;
 		config.write("scale", scale);
 		update_window_size();

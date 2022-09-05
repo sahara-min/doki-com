@@ -6,9 +6,9 @@ struct dma_t {
 
 	pri union {
 		struct { u16 src, dst, cnt, cmd; };
-		u8 regs[constants::dma_reg_size];
+		u8 regs[8];
 	};
-	pri i16 cycle;
+	pri i32 cycle;
 
 	pub bool is_transfering() {
 		return cycle >= 0;
@@ -60,11 +60,6 @@ struct dma_t {
 			if (bus.control == bus.read) bus.data = 0;
 			if (bus.control == bus.write) {
 				cmd = bus.data;
-				if (cmd & 0b00000100) {
-					src &= 0xFF00;
-					dst &= 0xFF00;
-					cnt &= 0xFF00;
-				}
 				cycle = 0;
 			}
 		}

@@ -12,17 +12,19 @@ struct constants {
 	st cexp u16 byte_table_base = 0x0000;
 	st cexp u16 byte_table_size = 0x0100;
 
-	st cexp u16 dma_reg_base = 0x0100;
-	st cexp u16 dma_reg_size = 0x0008;
+	st cexp u16 scratch_ram_base = 0x0100;
+	st cexp u16 scratch_ram_size = 0x0080;
 
-	st cexp u16 video_reg_base = 0x0108;
-	st cexp u16 video_reg_size = 0x0002;
+	st cexp u16 dma_reg_base = 0x0180;
+	st cexp u16 video_reg_base = 0x0190;
+	st cexp u16 audio_reg_base = 0x01A0;
+	st cexp u16 keyboard_reg_base = 0x01B0;
+	st cexp u16 controller_reg_base = 0x01C0;
+	st cexp u16 disk_reg_base = 0x01D0;
+	st cexp u16 bios_reg_base = 0x01F0;
 
-	st cexp u16 disk_reg_base = 0x01F0;
-	st cexp u16 disk_reg_size = 0x0002;
-
-	st cexp u16 boot_rom_base = 0x0200;
-	st cexp u16 boot_rom_size = 0x0200;
+	st cexp u16 bios_rom_base = 0x0200;
+	st cexp u16 bios_rom_size = 0x0200;
 
 	st cexp u16 work_ram_base = 0x0400;
 	st cexp u16 work_ram_size = 0x0C00;

@@ -68,6 +68,16 @@ struct menu_t {
 		os_add_menu_separator();
 	}
 
+	pub void set_enabled(i32 id, bool enabled) {
+		void os_set_menu_enabled(i32 id, bool enabled);
+		os_set_menu_enabled(id, enabled);
+	}
+
+	pub void set_checked(i32 id, bool checked) {
+		void os_set_menu_item_checked(i32 id, bool checked);
+		os_set_menu_item_checked(id, checked);
+	}
+
 	pub i32 get_result() {
 		long os_get_menu_result();
 		return os_get_menu_result();
@@ -99,23 +109,31 @@ st config_t config;
 
 struct file_t {
 
-	pub bool dropped() {
-		bool os_file_dropped();
-		return os_file_dropped();
+	pub bool is_read() {
+		bool os_file_is_read();
+		return os_file_is_read();
 	}
 
-	pub bool read(void* buffer, i32 count) {
-		bool os_file_read(void* buffer, i32 count);
-		return os_file_read(buffer, count);
-	}
-
-	pub bool is_ready() {
-		bool os_file_is_ready();
-		return os_file_is_ready();
+	pub u8* data() {
+		u8* os_file_data();
+		return os_file_data();
 	}
 };
 
 st file_t file;
+
+// ---------------------------------------------------------------------------
+// Input
+
+struct input_t {
+
+	pub bool key_is_down(u8 key) {
+		bool os_input_key_is_down(u8 key);
+		return os_input_key_is_down(key);
+	}
+};
+
+st input_t input;
 
 // ---------------------------------------------------------------------------
 // OpenGL

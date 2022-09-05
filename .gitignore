@@ -11,6 +11,7 @@
 *.sln*
 *.vcxproj*
 *.png
+*.bat
 disks/
 cpp.hint
 test*

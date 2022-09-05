@@ -1,0 +1,206 @@
+
+; --- Byte table --- ;
+
+byte_table = 0x000
+
+; --- Scratch RAM --- ;
+
+scratch_ram = 0x100
+
+args = 0x170
+arg0 = 0x170
+arg1 = 0x171
+arg2 = 0x172
+arg3 = 0x173
+arg4 = 0x174
+arg5 = 0x175
+arg6 = 0x176
+arg7 = 0x177
+
+tmp0 = 0x178
+tmp1 = 0x179
+tmp2 = 0x17A
+tmp3 = 0x17B
+tmp4 = 0x17C
+tmp5 = 0x17D
+tmp6 = 0x17E
+tmp7 = 0x17F
+
+; --- DMA registers --- ;
+
+reg_dma          = 0x180
+reg_dma_src      = 0x180
+reg_dma_src_lo   = 0x180
+reg_dma_src_hi   = 0x181
+reg_dma_dst      = 0x182
+reg_dma_dst_lo   = 0x182
+reg_dma_dst_hi   = 0x183
+reg_dma_count    = 0x184
+reg_dma_count_lo = 0x184
+reg_dma_count_hi = 0x185
+reg_dma_start    = 0x186
+
+; --- DMA start bits --- ;
+
+dma_src_inc   = 0b00000000
+dma_src_fixed = 0b00000001
+dma_dst_inc   = 0b00000000
+dma_dst_fixed = 0b00000010
+dma_copy      = dma_src_inc | dma_dst_inc
+dma_set       = dma_src_fixed | dma_dst_inc
+
+; --- Video registers --- ;
+
+reg_video_control = 0x190
+reg_video_status  = 0x191
+
+; --- Video control bits --- ;
+
+video_enabled = 0b00000001
+
+; --- Video status bits --- ;
+
+video_vblank = 0b00000001
+
+; --- Keyboard registers --- ;
+
+reg_key_state = 0x1B0
+
+; --- Keyboard keys --- ;
+
+key_0 = 0x00
+key_1 = 0x01
+key_2 = 0x02
+key_3 = 0x03
+key_4 = 0x04
+key_5 = 0x05
+key_6 = 0x06
+key_7 = 0x07
+key_8 = 0x08
+key_9 = 0x09
+
+key_a = 0x0A
+key_b = 0x0B
+key_c = 0x0C
+key_d = 0x0D
+key_e = 0x0E
+key_f = 0x0F
+key_g = 0x10
+key_h = 0x11
+key_i = 0x12
+key_j = 0x13
+key_k = 0x14
+key_l = 0x15
+key_m = 0x16
+key_n = 0x17
+key_o = 0x18
+key_p = 0x19
+key_q = 0x1A
+key_r = 0x1B
+key_s = 0x1C
+key_t = 0x1D
+key_u = 0x1E
+key_v = 0x1F
+key_w = 0x20
+key_x = 0x21
+key_y = 0x22
+key_z = 0x23
+
+key_lodash    = 0x24  ; _
+key_space     = 0x25  ;  
+key_dot       = 0x26  ; .
+key_comma     = 0x27  ; ,
+key_colon     = 0x28  ; :
+key_semicolon = 0x29  ; ;
+key_bang      = 0x2A  ; !
+key_question  = 0x2B  ; ?
+key_squote    = 0x2C  ; '
+key_dquote    = 0x2D  ; "
+key_pound     = 0x2E  ; #
+key_at        = 0x2F  ; @
+key_plus      = 0x30  ; +
+key_dash      = 0x31  ; -
+key_star      = 0x32  ; *
+key_slash     = 0x33  ; /
+key_percent   = 0x34  ; %
+key_and       = 0x35  ; &
+key_pipe      = 0x36  ; |
+key_equal     = 0x37  ; =
+key_less      = 0x38  ; <
+key_greater   = 0x39  ; >
+key_lparen    = 0x3A  ; (
+key_rparen    = 0x3B  ; )
+key_lbracket  = 0x3C  ; [
+key_rbracket  = 0x3D  ; ]
+key_lbrace    = 0x3E  ; {
+key_rbrace    = 0x3F  ; }
+
+key_enter  = 0x40
+key_tab    = 0x41
+key_back   = 0x42
+key_delete = 0x43
+key_left   = 0x44
+key_right  = 0x45
+key_up     = 0x46
+key_down   = 0x47
+
+; --- Keyboard key states --- ;
+
+key_state_up   = 0x00
+key_state_down = 0x01
+
+; --- Disk I/O registers --- ;
+
+reg_disk_fifo = 0x1D0
+reg_disk_status = 0x1D1
+
+; --- Disk FIFO commands --- ;
+
+disk_read  = 0x00
+; disk_write = 0x01
+disk_seek  = 0x02
+
+; --- Disk status bits --- ;
+
+disk_status_ready = 0b00000001
+
+; --- BIOS registers --- ;
+
+reg_bios_return  = 0x1F0
+reg_bios_control = 0x1F2
+
+; --- BIOS control bits --- ;
+
+bios_enabled = 0b00000001
+
+; --- BIOS/Boot ROM --- ;
+
+bios_rom = 0x200
+boot_rom = 0x200
+
+; --- BIOS routines --- ;
+
+bios_clear_vram  = 0x200
+bios_video_on    = 0x202
+bios_video_off   = 0x204
+bios_vblank_wait = 0x206
+bios_seek_page   = 0x208
+bios_read_pages  = 0x20A
+
+; --- Work RAM --- ;
+
+wram = 0x400
+
+; --- Video RAM --- ;
+
+vram             = 0x1000
+vram_tileset     = 0x1000
+vram_spriteset   = 0x3000
+vram_tilemap     = 0x5000
+vram_sprite_attr = 0x5400
+
+; --- Sprite attribute bits --- ;
+
+sprite_attr_normal = 0b00000000
+sprite_attr_flip_x = 0b00000001
+; sprite_attr_flip_y = 0b00000010

@@ -4,11 +4,11 @@
 
 struct bios_rom_t {
 
-	pri st cexp u8 boot_code[constants::boot_rom_size] = {
+	pri st cexp u8 boot_code[constants::bios_rom_size] = {
 #include "./boot_code.inl"
 	};
 
-	pri st cexp u8 bios_code[constants::boot_rom_size] = {
+	pri st cexp u8 bios_code[constants::bios_rom_size] = {
 #include "./bios_code.inl"
 	};
 
@@ -21,19 +21,18 @@ struct bios_rom_t {
 
 	pub void tick() {
 
-		u16 i = bus.address - constants::boot_rom_base;
+		u16 i = bus.address - constants::bios_rom_base;
 
-		if (i < constants::boot_rom_size) {
+		if (i < constants::bios_rom_size) {
 			if (bus.control == bus.read) bus.data = memory[i];
 			if (bus.control == bus.write) bios_return[i & 1] = bus.data;
 		}
 
-		if (i >= 0xFFFE) {
+		if (bus.address == constants::bios_reg_base + 0 || bus.address == constants::bios_reg_base + 1) {
 			if (bus.control == bus.read) bus.data = bios_return[i & 1];
-			if (bus.control == bus.write) bios_return[i & 1] = bus.data;
 		}
 
-		if (bus.address == 0x1FC && bus.control == bus.write) {
+		if (bus.address == constants::bios_reg_base + 2 && bus.control == bus.write) {
 			memory = (bus.data & 1) ? bios_code : boot_code;
 		}
 	}

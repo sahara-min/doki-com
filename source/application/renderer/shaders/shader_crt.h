@@ -26,7 +26,7 @@ void main(void) {
 	vec2 d = mod(vc - vec2(0.5, 0), 1);
 	vec4 c1 = texture2D(signal, (vc - vec2(0.5, 0)) / VIEW);
 	vec4 c2 = texture2D(signal, (vc + vec2(0.5, 0)) / VIEW);
-	vec4 c3 = mix(c1, c2, d.x);
+	vec4 c3 = 1.3 * mix(c1, c2, d.x);
 	gl_FragColor = c3 * sin(3.1415 * d.y);
 }
 

@@ -41,6 +41,7 @@ struct video_t {
 	pri u16 sprite_i[16];
 	pri u8 sprite_x[16];
 	pri u8 sprite_d[16];
+	pri u8 sprite_t[16];
 
 	pri u8 line_buffers[2][256];
 	pri u8* line_buffer_read;
@@ -85,10 +86,12 @@ struct video_t {
 				u8 attr = sprite_table[i + 2];
 				u8 flip_x = attr & 0b00000001;
 				u8 flip_y = attr & 0b00000010;
+				u8 transp = attr >> 4;
 				u8 x = sprite_table[i + 3];
 				sprite_i[sprite_count] = tile * 64 + y * 8;
 				sprite_x[sprite_count] = x + (flip_x ? 7 : 0);
 				sprite_d[sprite_count] = flip_x ? -1 : 1;
+				sprite_t[sprite_count] = transp;
 				sprite_count++;
 			}
 		}
@@ -99,8 +102,9 @@ struct video_t {
 				u16 i = sprite_i[sprite];
 				u8 x = sprite_x[sprite];
 				u8 d = sprite_d[sprite];
-				if (line_buffer_write[x] > 0xF)
-					line_buffer_write[x] = (spriteset[i / 2] >> ((i & 1) * 4)) & 0x0F;
+				u8 e = (spriteset[i / 2] >> ((i & 1) * 4)) & 0x0F;
+				if (line_buffer_write[x] > 0xF && e != sprite_t[sprite])
+					line_buffer_write[x] = e;
 				sprite_x[sprite] += d;
 				sprite_i[sprite] += 1;
 			}

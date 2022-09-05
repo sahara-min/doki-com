@@ -1,0 +1,220 @@
+include "doki.a"
+
+section boot_rom_section [base=boot_rom]
+
+i = tmp0
+j = tmp1
+
+clear_vram:
+  dst reg_dma 
+  cpy 0x00
+  cpy 0x00
+  cpy lo(vram)
+  cpy hi(vram)
+  cpy 0x00
+  cpy 0x44
+  cpy dma_src_fixed
+
+  dst reg_dma
+  cpy 0xF0
+  cpy 0x00
+  cpy lo(vram_sprite_attr)
+  cpy hi(vram_sprite_attr)
+  cpy 0x00
+  cpy 0x02
+  cpy dma_src_fixed
+
+load_logo_sprites:
+  dst reg_dma
+  cpy lo(logo_sprites)
+  cpy hi(logo_sprites)
+  cpy lo(vram_spriteset)
+  cpy hi(vram_spriteset)
+  cpy 0x00
+  cpy 0x01
+  cpy 0
+
+load_logo_sprite_attr:
+  dst reg_dma
+  cpy lo(logo_sprite_attr)
+  cpy hi(logo_sprite_attr)
+  cpy lo(vram_sprite_attr)
+  cpy hi(vram_sprite_attr)
+  cpy 0x20
+  cpy 0x00
+  cpy 0
+
+enable_video:
+  mov 0x01
+  wri reg_video_control
+  
+animate_chars:
+  dst reg_dma_dst
+  cpy lo(vram_sprite_attr)
+  cpy hi(vram_sprite_attr)
+  clr i
+.loop_i:
+  dst reg_dma_src
+  cpy lo(anim_table)
+  cpy hi(anim_table)
+  clr j
+.loop_j:
+.wait_vblank:
+  mov reg_video_status
+  shl 7
+  neq 0b10000000
+  jmp .wait_vblank
+  clr reg_video_status
+
+  inc reg_dma_count_lo
+  mov dma_dst_fixed
+  wri reg_dma_start
+  inc j
+  neq 8
+  jmp .loop_j
+
+  mov reg_dma_dst_lo
+  add 4
+  wri reg_dma_dst_lo
+
+  inc i
+  neq 8
+  jmp .loop_i
+
+read_disk_boot_sector:
+  mov disk_seek
+  wri reg_disk_fifo
+  mov 0x00
+  wri reg_disk_fifo
+  mov 0x00
+  wri reg_disk_fifo
+  mov 0x00
+  wri reg_disk_fifo
+.wait1:
+  mov reg_disk_status
+  neq 0x01
+  jmp .wait1
+  clr i
+.loop:
+  clr reg_disk_fifo
+.wait2:
+  mov reg_disk_status
+  neq 0x01
+  jmp .wait2
+  mov reg_disk_fifo
+  moi i
+  wri wram
+  inc i
+  neq 0
+  jmp .loop
+  
+wait_1s:
+  clr i
+.loop:
+.wait_vblank:
+  mov reg_video_status
+  shl 7
+  neq 0b10000000
+  jmp .wait_vblank
+  clr reg_video_status
+  inc i
+  neq 60
+  jmp .loop
+
+done:
+  jmp end
+
+anim_table:
+  byte 84, 85, 86, 87, 88, 88, 87, 86
+
+logo_sprites:
+
+  '42444440'
+  '2444B444'
+  '44440444'
+  '44440444'
+  '55550555'
+  '55550555'
+  '5555555B'
+  'BBBBBBB0'
+  
+  '02444440'
+  '2444B444'
+  '44440444'
+  '44440444'
+  '55550555'
+  '55550555'
+  'B555555B'
+  '0BBBBBB0'
+  
+  '42440444'
+  '24440444'
+  '4444044B'
+  '444444B0'
+  '5555B550'
+  '55550555'
+  '55550555'
+  'BBBB0BBB'
+  
+  '42440000'
+  '24440000'
+  '44440000'
+  '44440000'
+  '55550000'
+  '55550000'
+  '55550000'
+  'BBBB0000'
+  
+  '00000000'
+  '00000000'
+  '0DD00000'
+  'DDDD0000'
+  'BCCB0000'
+  '0BB00000'
+  '00000000'
+  '00000000'
+  
+  '02DDDDD0'
+  '2DDDBDDD'
+  'DDDD0BBB'
+  'DDDD0000'
+  'CCCC0000'
+  'CCCC0CCC'
+  'BCCCCCCB'
+  '0BBBBBB0'
+  
+  '02DDDDD0'
+  '2DDDBDDD'
+  'DDDD0DDD'
+  'DDDD0DDD'
+  'CCCC0CCC'
+  'CCCC0CCC'
+  'BCCCCCCB'
+  '0BBBBBB0'
+  
+  'D2D000DD'
+  '2DDD0DDD'
+  'DDDDDDDD'
+  'DDDDBDDD'
+  'CCCC0CCC'
+  'CCCC0CCC'
+  'CCCC0CCC'
+  'BBBB0BBB'
+
+logo_sprite_attr:
+  byte 0xF0, 0x00, 0x00, 0x4E
+  byte 0xF0, 0x01, 0x00, 0x5A
+  byte 0xF0, 0x02, 0x00, 0x66
+  byte 0xF0, 0x03, 0x00, 0x72
+  byte 0xF0, 0x04, 0x00, 0x7A
+  byte 0xF0, 0x05, 0x00, 0x82
+  byte 0xF0, 0x06, 0x00, 0x8E
+  byte 0xF0, 0x07, 0x00, 0x9A
+
+padding:
+  '00000000000000000000000000000000'
+  '0000000000000000000000000000'
+
+end:
+  mov bios_enabled
+  wri reg_bios_control
