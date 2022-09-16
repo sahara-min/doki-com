@@ -1,0 +1,158 @@
+include "doki.doa"
+
+section bios_rom_section [base=bios_rom]
+
+i = tmp0
+j = tmp1
+
+word 0 ; padding
+
+jmp clear_vram
+jmp video_on
+jmp video_off
+jmp sync_vstart
+jmp sync_hblank
+jmp sync_vblank
+jmp seek_page
+jmp read_pages
+jmp disk_wait
+jmp add_16
+jmp sub_16
+
+clear_vram:
+  dst reg_dma
+  cpy 0x00
+  cpy 0x00
+  cpy lo(vram)
+  cpy hi(vram)
+  cpy 0x00
+  cpy 0x44
+  cpy dma_src_fixed
+
+  dst reg_dma
+  cpy 0xF0
+  cpy 0x00
+  cpy lo(vram_sprite_attr)
+  cpy hi(vram_sprite_attr)
+  cpy 0x00
+  cpy 0x02
+  cpy dma_src_fixed
+
+  jmp reg_bios_return
+
+video_on:
+.wait:
+  mov reg_video_vcount
+  add 256 - display_height
+  bno .wait
+  mov video_enabled
+  wri reg_video_control
+  jmp reg_bios_return
+
+video_off:
+.wait:
+  mov reg_video_vcount
+  add 256 - display_height
+  bno .wait
+  clr reg_video_control
+  jmp reg_bios_return
+
+sync_vstart:
+.wait1:
+  mov reg_video_vcount
+  add 255
+  bno .wait1
+.wait2:
+  mov reg_video_vcount
+  bnz .wait2
+  jmp reg_bios_return
+
+sync_hblank:
+.wait1:
+  mov reg_video_hcount
+  sub 256 - display_width
+  bno .wait1
+.wait2:
+  mov reg_video_hcount
+  add 256 - display_width
+  bno .wait2
+  jmp reg_bios_return
+
+sync_vblank:
+.wait1:
+  mov reg_video_vcount
+  sub 256 - display_height
+  bno .wait1
+.wait2:
+  mov reg_video_vcount
+  add 256 - display_height
+  bno .wait2
+  jmp reg_bios_return
+
+seek_page:
+  mov disk_seek
+  wri reg_disk_fifo
+  mov 0x00
+  wri reg_disk_fifo
+  mov arg0
+  wri reg_disk_fifo
+  mov arg1
+  wri reg_disk_fifo
+  jmp disk_wait
+
+read_pages:
+  dst reg_dma
+  cpy lo(reg_disk_fifo)
+  cpy hi(reg_disk_fifo)
+  cpy 0x00
+  cpy arg0
+  cpy 0x00
+  cpy 0x00
+  clr i
+.page_loop:
+  clr j
+.byte_loop:
+  clr reg_disk_fifo
+.wait:
+  mov reg_disk_status
+  xor disk_status_ready
+  bnz .wait
+  mov 1
+  wri reg_dma_count_lo
+  mov dma_src_fixed
+  wri reg_dma_start
+  inc j
+  bnz .byte_loop
+  inc i
+  sub arg1
+  bnz .page_loop
+  jmp reg_bios_return
+
+disk_wait:
+  mov reg_disk_status
+  bnz reg_bios_return
+  jmp disk_wait
+
+add_16:
+  mov arg0
+  add arg2
+  wri res0
+  mov arg1
+  bno .nocarry
+  add 1
+.nocarry:
+  add arg3
+  wri res1
+  jmp reg_bios_return
+
+sub_16:
+  mov arg0
+  sub arg2
+  wri res0
+  mov arg1
+  bno .noborrow
+  sub 1
+.noborrow:
+  sub arg3
+  wri res1
+  jmp reg_bios_return

@@ -6,10 +6,6 @@
 #include <windows.h>
 #include <shellapi.h>
 
-#ifndef NDEBUG
-#include <cstdio>
-#endif
-
 #define WINDOW_CLASS_NAME "doki-window"
 #define WINDOW_STYLE (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
 
@@ -106,7 +102,7 @@ int main() {
 	HMODULE hinstance = GetModuleHandle(NULL);
 
 	WNDCLASS wc = { 0 };
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC /*| CS_DBLCLKS*/;
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.lpfnWndProc = window_proc;
 	wc.hInstance = hinstance;
 	wc.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(101));
@@ -157,9 +153,6 @@ int main() {
 			}
 		}
 
-#ifndef NDEBUG
-		printf("%f\n", dt);
-#endif
 		t_last = t_now;
 
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {

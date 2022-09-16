@@ -20,7 +20,7 @@ struct application_t {
 		menu.add_item(6, "6x");
 		menu.add_item(8, "8x");
 		menu.add_separator();
-		menu.add_item(99, "Version: Midori (0.1.0)");
+		menu.add_item(99, "Version: Kimono (0.2.0)");
 
 		menu.set_enabled(0, false);
 		menu.set_enabled(99, false);

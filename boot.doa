@@ -1,4 +1,4 @@
-include "doki.a"
+include "doki.doa"
 
 section boot_rom_section [base=boot_rom]
 
@@ -59,27 +59,22 @@ animate_chars:
   cpy hi(anim_table)
   clr j
 .loop_j:
-.wait_vblank:
-  mov reg_video_status
-  shl 7
-  neq 0b10000000
-  jmp .wait_vblank
-  clr reg_video_status
+  call vsync
 
   inc reg_dma_count_lo
   mov dma_dst_fixed
   wri reg_dma_start
   inc j
-  neq 8
-  jmp .loop_j
+  sub 8
+  bnz .loop_j
 
   mov reg_dma_dst_lo
   add 4
   wri reg_dma_dst_lo
 
   inc i
-  neq 8
-  jmp .loop_i
+  sub 8
+  bnz .loop_i
 
 read_disk_boot_sector:
   mov disk_seek
@@ -92,37 +87,42 @@ read_disk_boot_sector:
   wri reg_disk_fifo
 .wait1:
   mov reg_disk_status
-  neq 0x01
-  jmp .wait1
+  xor disk_status_ready
+  bnz .wait1
   clr i
 .loop:
   clr reg_disk_fifo
 .wait2:
   mov reg_disk_status
-  neq 0x01
-  jmp .wait2
+  xor disk_status_ready
+  bnz .wait2
   mov reg_disk_fifo
   moi i
   wri wram
   inc i
-  neq 0
-  jmp .loop
+  bnz .loop
   
 wait_1s:
   clr i
 .loop:
-.wait_vblank:
-  mov reg_video_status
-  shl 7
-  neq 0b10000000
-  jmp .wait_vblank
-  clr reg_video_status
+  call vsync
   inc i
-  neq 60
-  jmp .loop
+  sub 60
+  bnz .loop
 
 done:
   jmp end
+
+vsync: word 0
+.wait1:
+  mov reg_video_vcount
+  sub 256 - display_height
+  bno .wait1
+.wait2:
+  mov reg_video_vcount
+  add 256 - display_height
+  bno .wait2
+  jmp reg_bios_return
 
 anim_table:
   byte 84, 85, 86, 87, 88, 88, 87, 86
@@ -213,7 +213,7 @@ logo_sprite_attr:
 
 padding:
   '00000000000000000000000000000000'
-  '0000000000000000000000000000'
+  '00000000000000000000000000000000'
 
 end:
   mov bios_enabled

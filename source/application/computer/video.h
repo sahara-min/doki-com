@@ -24,8 +24,17 @@ struct video_t {
 		0x4d2536,
 	};
 
-	pri u8 reg_control;
-	pri u8 reg_status;
+	pri st cexp u16 reg_control = constants::video_reg_base + 0;
+	pri st cexp u16 reg_bg_offset_x = constants::video_reg_base + 1;
+	pri st cexp u16 reg_bg_offset_y = constants::video_reg_base + 2;
+	pri st cexp u16 reg_hcount = constants::video_reg_base + 3;
+	pri st cexp u16 reg_vcount = constants::video_reg_base + 4;
+
+	pri st cexp u8 bit_enabled = 0b00000001;
+
+	pri u8 control;
+	pri u8 bg_offset_x;
+	pri u8 bg_offset_y;
 
 	pri union {
 		struct {
@@ -50,34 +59,30 @@ struct video_t {
 	pri i32 row;
 	pri i32 col;
 
-	pri bool enabled;
-	pri u8 bg_color;
 	pri u8 output;
 
 	pub void power_on() {
-		reg_control = 0x00;
-		reg_status = 0x00;
+		control = 0x00;
+		bg_offset_x = 0;
+		bg_offset_y = 0;
 		sprite_count = 0;
 		line_buffer_read = line_buffers[0];
 		line_buffer_write = line_buffers[1];
 		row = 0;
 		col = 0;
-		enabled = false;
-		bg_color = 0;
 		output = 0;
 	}
 
 	pub void tick() {
 
-		output = bg_color;
+		output = (control >> 4) & 0x0F;
 
 		handle_reg_control_writes();
 		handle_reg_status_reads();
-		handle_reg_status_acknowledges();
-		if (!enabled || row >= constants::screen_height)
+		if (!(control & bit_enabled) || row >= constants::screen_height)
 			handle_vram_writes();
 
-		if (enabled && row < constants::screen_height && col < 128 && sprite_count < 16) {
+		if ((control & bit_enabled) && row < constants::screen_height && col < 128 && sprite_count < 16) {
 			i32 i = 4 * col;
 			u8 y = (u8)(row - sprite_table[i + 0]);
 			
@@ -96,7 +101,7 @@ struct video_t {
 			}
 		}
 
-		if (enabled && row < constants::screen_height && col >= 128 && col < 256) {
+		if ((control & bit_enabled) && row < constants::screen_height && col >= 128 && col < 256) {
 			u8 sprite = (u8)((col - 128) / 8);
 			if (sprite < sprite_count) {
 				u16 i = sprite_i[sprite];
@@ -110,12 +115,18 @@ struct video_t {
 			}
 		}
 
-		if (enabled && row < constants::screen_height && col < constants::screen_width) {
-			i32 mx = col >> 3;
-			i32 my = row >> 3;
-			i32 ts = col & 0x1;
-			i32 tx = (col & 0x7) >> 1;
-			i32 ty = row & 0x7;
+		if (row >= constants::screen_height && col < 256) {
+			line_buffer_write[col] = 0xFF;
+		}
+
+		if ((control & bit_enabled) && row < constants::screen_height && col < constants::screen_width) {
+			i32 bx = (col - bg_offset_x) & 0xFF;
+			i32 by = (row - bg_offset_y) & 0xFF;
+			i32 mx = bx >> 3;
+			i32 my = by >> 3;
+			i32 ts = bx & 0x1;
+			i32 tx = (bx & 0x7) >> 1;
+			i32 ty = by & 0x7;
 			i32 ti = tilemap[my * 32 + mx];
 			i32 pv = tileset[ti * 32 + ty * 4 + tx];
 			output = (pv >> (ts << 2)) & 0xF;
@@ -140,31 +151,24 @@ struct video_t {
 			sprite_count = 0;
 			col = 0;
 			row++;
-			if (row == 180)
-				reg_status |= 0b00000001;
-			if (row == 260)
-				reg_status &= 0b11111110;
-			if (row == 262) {
-				enabled = reg_control & 0b00000001;
-				bg_color = reg_control >> 4;
+			if (row == 262)
 				row = 0;
-			}
 		}
 	}
 
 	pri void handle_reg_control_writes() {
-		if (bus.address == constants::video_reg_base && bus.control == bus.write)
-			reg_control = bus.data;
+		if (bus.control == bus.write) {
+			if (bus.address == reg_control) control = bus.data;
+			if (bus.address == reg_bg_offset_x) bg_offset_x = bus.data;
+			if (bus.address == reg_bg_offset_y) bg_offset_y = bus.data;
+		}
 	}
 
 	pri void handle_reg_status_reads() {
-		if (bus.address == constants::video_reg_base + 1 && bus.control == bus.read)
-			bus.data = reg_status;
-	}
-
-	pri void handle_reg_status_acknowledges() {
-		if (bus.address == constants::video_reg_base + 1 && bus.control == bus.write && (bus.data & 0b1) == 0)
-			reg_status &= 0b11111110;
+		if (bus.control == bus.read) {
+			if (bus.address == reg_hcount) bus.data = col < 255 ? col : 255;
+			if (bus.address == reg_vcount) bus.data = row < 255 ? row : 255;
+		}
 	}
 
 	pri void handle_vram_writes() {

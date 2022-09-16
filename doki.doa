@@ -1,3 +1,5 @@
+display_width  = 240
+display_height = 180
 
 ; --- Byte table --- ;
 
@@ -14,8 +16,8 @@ arg2 = 0x172
 arg3 = 0x173
 arg4 = 0x174
 arg5 = 0x175
-arg6 = 0x176
-arg7 = 0x177
+res0 = 0x176
+res1 = 0x177
 
 tmp0 = 0x178
 tmp1 = 0x179
@@ -52,15 +54,14 @@ dma_set       = dma_src_fixed | dma_dst_inc
 ; --- Video registers --- ;
 
 reg_video_control = 0x190
-reg_video_status  = 0x191
+reg_video_bg_x    = 0x191
+reg_video_bg_y    = 0x192
+reg_video_hcount  = 0x193
+reg_video_vcount  = 0x194
 
 ; --- Video control bits --- ;
 
 video_enabled = 0b00000001
-
-; --- Video status bits --- ;
-
-video_vblank = 0b00000001
 
 ; --- Keyboard registers --- ;
 
@@ -183,9 +184,14 @@ boot_rom = 0x200
 bios_clear_vram  = 0x200
 bios_video_on    = 0x202
 bios_video_off   = 0x204
-bios_vblank_wait = 0x206
-bios_seek_page   = 0x208
-bios_read_pages  = 0x20A
+bios_sync_vstart = 0x206
+bios_sync_hblank = 0x208
+bios_sync_vblank = 0x20A
+bios_seek_page   = 0x20C
+bios_read_pages  = 0x20E
+bios_disk_wait   = 0x210
+bios_add_16      = 0x212
+bios_sub_16      = 0x214
 
 ; --- Work RAM --- ;
 
