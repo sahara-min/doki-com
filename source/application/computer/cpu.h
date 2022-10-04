@@ -4,154 +4,187 @@
 
 struct cpu_t {
 
-	pri st cexp u16 address_mask = 0xFFF;
+	pri enum op_t {
+		op_mov,
+		op_moi,
+		op_add,
+		op_sub,
+		op_wri,
+		op_dst,
+		op_cpy,
+		op_call,
+		op_bzc,
+		op_bcc,
+		op_inc,
+		op_orr,
+		op_xor,
+		op_and,
+		op_rol,
+		op_ror,
+		op_ssr,
+		op_ret,
+	};
+
+	pri st cexp u16 address_mask = 0b0001111111111111;
+	pri st cexp u8 stack_size = 8;
+	pri st cexp u8 stack_mask = stack_size - 1;
 
 	pri u16 pc;
-	pri u16 cd;
-	pri u8 i;
+	pri u16 d;
 	pri u8 a;
-	
-	pri i8 cycle;
-	pri i8 opcode;
-	pri i16 addr;
-	pri bool overflow;
+	pri union {
+		struct {
+			unsigned z : 1;
+			unsigned c : 1;
+			unsigned m : 1;
+		};
+		u8 sr;
+	};
+	pri u8 sp;
+	pri u16 stack[stack_size];
+
+	pri u16 cycle;
+	pri u16 instruction;
+	pri op_t op;
+	pri u16 arg;
 
 	pub void power_on() {
-		pc = constants::bios_rom_base;
-		cd = 0x000;
-		i = 0x00;
-		a = 0x00;
-		
+		pc = constants::boot_rom_base;
+		d = 0;
+		a = 0;
+		z = 0;
+		c = 0;
+		m = 0;
+		sp = 0;
 		cycle = 0;
-		opcode = 0x00;
-		addr = 0x000;
-		overflow = false;
-
-		bus.halt = 0;
 	}
 
 	pub void tick() {
 
 		if (bus.halt) {
-			bus.halt = 0;
+			bus.halt = false;
 			return;
 		}
 
-#ifndef NDEBUG
-		if (pc == constants::work_ram_base)
-			pc = pc;
-#endif
-
 		switch (cycle) {
 		case 0:
-			fetch_next();
+			read(pc++);
+			cycle++;
 			break;
 		case 1:
-			addr = bus.data;
-			pc++;
-			read(pc);
+			instruction = bus.data;
+			read(pc++);
+			cycle++;
 			break;
 		case 2:
-			addr |= (bus.data & 0x0F) << 8;
-			opcode = bus.data >> 4;
-			pc++;
-			switch (opcode) {
-			case 0x0: read(addr + i); break; // moi
-			case 0x1: read(addr + i); break; // mov
-			case 0x2: read(addr + i); break; // add
-			case 0x3: read(addr + i); break; // sub
-			case 0x4: read(addr + i); break; // and
-			case 0x5: read(addr + i); break; // xor
-			case 0x6: read(addr + i); break; // lsh
-			case 0x7: write(addr + i, a); break; // wri
-			case 0x8: a = 0; write(addr + i, a); break; // clr
-			case 0x9: read(addr + i); break; // inc
-			case 0xA: cd = (addr + i) & address_mask; fetch_next(); clear_i(); break; // dst
-			case 0xB: read(addr + i); break; // cpy
-			case 0xC: if (a != 0) jump_and_fetch(addr + i); else fetch_next(); clear_i(); break; // bnz
-			case 0xD: if (!overflow) jump_and_fetch(addr + i); else fetch_next(); clear_i(); break; // bno
-			case 0xE: jump_and_fetch(addr + i); clear_i(); break; // jmp
-			case 0xF: write(addr + i, lo(pc)); break; // call
+			instruction |= bus.data << 8;
+			parse_instruction();
+			switch (op) {
+			case op_mov: read(arg); cycle++; break;
+			case op_moi: read(arg + a); cycle++; break;
+			case op_add: read(arg); cycle++; break;
+			case op_sub: read(arg); cycle++; break;
+			case op_wri: write(arg, a); cycle = 0; break;
+			case op_dst: d = arg; read(pc++); cycle = 1; break;
+			case op_cpy: read(arg); cycle++; break;
+			case op_call: sr = 0; push(pc); pc = arg; read(pc++); cycle = 1; break;
+			case op_bzc: if (!z) pc += arg; read(pc++); cycle = 1; break;
+			case op_bcc: if (!c) pc += arg; read(pc++); cycle = 1; break;
+			case op_inc: read(d); cycle++; break;
+			case op_orr: a = set_z(a | arg); read(pc++); cycle = 1; break;
+			case op_xor: a = set_z(a ^ arg); read(pc++); cycle = 1; break;
+			case op_and: a = set_z(a & arg); read(pc++); cycle = 1; break;
+			case op_rol: a = set_zc((i32)a << 1 | (c & m) << 0); read(pc++); cycle = 1; break;
+			case op_ror: a = set_zc((i32)a >> 1 | (c & m) << 7); read(pc++); cycle = 1; break;
+			case op_ssr: sr &= arg & 0b0111; sr |= arg >> 4 & 0b0111; read(pc++); cycle = 1; break;
+			case op_ret: sr &= arg & 0b0111; sr |= arg >> 4 & 0b0111; pc = pop(); read(pc++); cycle = 1; break;
 			}
 			break;
 		case 3:
-			switch (opcode) {
-			case 0x0: i = bus.data; fetch_next(); break; // moi
-			case 0x1: a = bus.data; fetch_next(); clear_i(); break; // mov
-			case 0x2: overflow = (u8)(a + bus.data) < a; a += bus.data; fetch_next(); clear_i(); break; // add
-			case 0x3: overflow = (u8)(a - bus.data) > a; a -= bus.data; fetch_next(); clear_i(); break; // sub
-			case 0x4: a &= bus.data; fetch_next(); clear_i(); break; // and
-			case 0x5: a ^= bus.data; fetch_next(); clear_i(); break; // xor
-			case 0x6: if (bus.data < 128) a <<= (i8)bus.data; else a >>= -(i8)bus.data; fetch_next(); clear_i(); break; // lsh
-			case 0x7: fetch_next(); clear_i(); break; // wri
-			case 0x8: fetch_next(); clear_i(); break; // clr
-			case 0x9: a = bus.data + 1; overflow = a == 0; write(addr + i, a); break; // inc
-			case 0xA: break; // dst
-			case 0xB: a = bus.data; write(cd, a); break; // cpy
-			case 0xC: break; // bnz
-			case 0xD: break; // bno
-			case 0xE: break; // jmp
-			case 0xF: write(addr + i + 1, 0xE0 | hi(pc + 1)); break; // call
+			switch (op) {
+			case op_mov: a = set_z(bus.data); read(pc++); cycle = 1; break;
+			case op_moi: a = set_z(bus.data); read(pc++); cycle = 1; break;
+			case op_add: a = set_zc((i32)a + bus.data + (c & m)); read(pc++); cycle = 1; break;
+			case op_sub: a = set_zc((i32)a - bus.data - (c & m)); read(pc++); cycle = 1; break;
+			case op_wri: break;
+			case op_dst: break;
+			case op_cpy: write(d, bus.data); d++; cycle = 0; break;
+			case op_call: break;
+			case op_bzc: break;
+			case op_bcc: break;
+			case op_inc: write(d, set_zc((i32)bus.data + arg)); cycle = 0; break;
+			case op_orr: break;
+			case op_xor: break;
+			case op_and: break;
+			case op_rol: break;
+			case op_ror: break;
+			case op_ssr: break;
+			case op_ret: break;
 			}
 			break;
-		case 4:
-			switch (opcode) {
-			case 0x0: break; // moi
-			case 0x1: break; // mov
-			case 0x2: break; // add
-			case 0x3: break; // sub
-			case 0x4: break; // and
-			case 0x5: break; // xor
-			case 0x6: break; // lsh
-			case 0x7: break; // wri
-			case 0x8: break; // clr
-			case 0x9: fetch_next(); clear_i(); break; // inc
-			case 0xA: break; // dst
-			case 0xB: cd = (cd + 1) & address_mask; fetch_next(); clear_i(); break; // cpy
-			case 0xC: break; // bnz
-			case 0xD: break; // bno
-			case 0xE: break; // jmp
-			case 0xF: jump_and_fetch(addr + i + 2); clear_i(); break; // call
-			}
 		}
 	}
 
-	pri void clear_i() {
-		i = 0x00;
-	}
+	pri void parse_instruction() {
 
-	pri void fetch_next() {
-		bus.address = pc & address_mask;
-		bus.control = bus.read;
-		cycle = 1;
-	}
+		u16 opcode = instruction >> 13;
 
-	pri void jump_and_fetch(u16 address) {
-		pc = address & address_mask;
-		bus.address = pc;
-		bus.control = bus.read;
-		cycle = 1;
+		if (opcode != 0b111) {
+			op = (op_t)opcode; // mov, moi, add, sub, wri, dst, cpy
+			arg = instruction & 0b0001111111111111;
+			return;
+		}
+
+		opcode = instruction >> 12;
+
+		if (opcode == 0b1110) {
+			op = op_call; // call
+			arg = (instruction & 0b0000111111111111) << 1;
+			return;
+		}
+
+		opcode = instruction >> 11;
+
+		if (opcode == 0b11110) {
+			op = (op_t)(0x08 + (instruction >> 10 & 0b1)); // bzc, bcc
+			arg = (instruction & 0b0000001111111111) << 1;
+			if (arg & 0b0000010000000000) // Negative sign?
+				arg |= 0b1111100000000000; // Sign extend
+			return;
+		}
+
+		op = (op_t)(0x0A + (instruction >> 8 & 0b111)); // inc, orr, xor, and, rol, ror, ssr, ret
+		arg = instruction & 0b0000000011111111;
 	}
 
 	pri void read(u16 address) {
-		cycle++;
 		bus.address = address & address_mask;
 		bus.control = bus.read;
 	}
 
 	pri void write(u16 address, u8 data) {
-		cycle++;
 		bus.address = address & address_mask;
 		bus.data = data;
 		bus.control = bus.write;
 	}
 
-	pri st u8 lo(u16 n) {
-		return n & 0xFF;
+	pri void push(u16 address) {
+		stack[sp++ & stack_mask] = address;
 	}
 
-	pri st u8 hi(u16 n) {
-		return n >> 8;
+	pri u16 pop() {
+		return stack[--sp & stack_mask];
+	}
+
+	pri u8 set_z(i32 value) {
+		z = (value & 0xFF) == 0 ? 1 : 0;
+		return (u8)value;
+	}
+
+	pri u8 set_zc(i32 value) {
+		z = (value & 0xFF) == 0 ? 1 : 0;
+		c = value < 0 || value > 255 ? 1 : 0;
+		return (u8)value;
 	}
 };
 

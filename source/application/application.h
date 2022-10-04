@@ -6,11 +6,15 @@
 
 struct application_t {
 
+	pri bool mouse_is_captured;
+
 	pub void start() {
 		
+		mouse_is_captured = false;
+
 		settings.scale = config.read("scale", constants::default_scale);
 
-		window.set_title("DOKICOM");
+		update_window_title();
 		update_window_size();
 		
 		menu.add_item(0, "Reset");
@@ -20,7 +24,7 @@ struct application_t {
 		menu.add_item(6, "6x");
 		menu.add_item(8, "8x");
 		menu.add_separator();
-		menu.add_item(99, "Version: Kimono (0.2.0)");
+		menu.add_item(99, "Version: Nezumi (0.3.0)");
 
 		menu.set_enabled(0, false);
 		menu.set_enabled(99, false);
@@ -43,6 +47,16 @@ struct application_t {
 			computer.run_frame();
 			renderer.update();
 		}
+
+		if (!mouse_is_captured && input.mouse_is_captured()) {
+			mouse_is_captured = input.mouse_is_captured();
+			update_window_title();
+		}
+			
+		if (mouse_is_captured && !input.mouse_is_captured()) {
+			mouse_is_captured = input.mouse_is_captured();
+			update_window_title();
+		}
 	}
 
 	pri void handle_menu_result() {
@@ -59,6 +73,13 @@ struct application_t {
 		settings.scale = scale;
 		config.write("scale", scale);
 		update_window_size();
+	}
+
+	pri void update_window_title() {
+		if (mouse_is_captured)
+			window.set_title("DOKICOM (Press ESC to release mouse)");
+		else
+			window.set_title("DOKICOM");
 	}
 
 	pri void update_window_size() {

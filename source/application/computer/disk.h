@@ -56,7 +56,7 @@ struct disk_t {
 		if (bus.address == reg_status) {
 
 			if (bus.control == bus.read) {
-				bus.data = 0b00000001;
+				bus.data = 0b00000000;
 			}
 		}
 	}
@@ -64,7 +64,7 @@ struct disk_t {
 	pri void tick_reading() {
 
 		if (bus.address == reg_status && bus.control == bus.read)
-			bus.data = 0b00000000;
+			bus.data = 0b00000001;
 
 		if (delay > 0) delay--;
 		if (delay == 0)
@@ -73,7 +73,7 @@ struct disk_t {
 
 	pri void tick_seeking() {
 		if (bus.address == reg_status && bus.control == bus.read)
-			bus.data = 0b00000000;
+			bus.data = 0b00000001;
 
 		if (state < seeking3 && bus.address == reg_fifo && bus.control == bus.write) {
 			i32 s = (state - seeking0) * 8;

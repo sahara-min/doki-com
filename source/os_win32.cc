@@ -27,6 +27,10 @@ static bool shift_held;
 static bool control_held;
 static bool alt_held;
 static bool key_matrix[256];
+static bool mouse_is_captured;
+static long mouse_delta_x;
+static long mouse_delta_y;
+static bool mouse_held[2];
 
 static bool key_down_vk(int vk) {
 	return (GetAsyncKeyState(vk) & 0x8000) != 0;
@@ -53,11 +57,36 @@ static void read_file(LPCWSTR filename) {
 	CloseHandle(hfile);
 }
 
+static POINT get_window_center() {
+	RECT r;
+	POINT p;
+	GetClientRect(hwnd, &r);
+	p.x = (r.right - r.left) / 2;
+	p.y = (r.bottom - r.top) / 2;
+	ClientToScreen(hwnd, &p);
+	return p;
+}
+
 static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	static wchar_t filename[MAX_PATH];
 	
 	switch (msg) {
+	case WM_LBUTTONDOWN:
+		if (!mouse_is_captured) {
+			ShowCursor(false);
+			POINT p = get_window_center();
+			SetCursorPos(p.x, p.y);
+			RECT r;
+			GetClientRect(hwnd, &r);
+			ClientToScreen(hwnd, (POINT*)&r.left);
+			ClientToScreen(hwnd, (POINT*)&r.right);
+			ClipCursor(&r);
+			mouse_is_captured = true;
+		}
+		return 0;
 	case WM_RBUTTONDOWN:
+		if (mouse_is_captured)
+			return 0;
 		POINT p;
 		p.x = LOWORD(lparam);
 		p.y = HIWORD(lparam);
@@ -65,8 +94,16 @@ static LONG_PTR WINAPI window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 		menu_result = TrackPopupMenu(hmenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD, p.x, p.y, 0, hwnd, NULL);
 		menu_result--;
 		return 0;
+	case WM_KEYDOWN:
+		if (mouse_is_captured && wparam == VK_ESCAPE) {
+			ShowCursor(true);
+			ClipCursor(NULL);
+			mouse_is_captured = false;
+			return 0;
+		}
+		break;
 	case WM_DROPFILES:
-		DragQueryFileW((HDROP)wparam, 0, filename, sizeof(filename) - 1);
+		DragQueryFileW((HDROP)wparam, 0, filename, sizeof(filename) / sizeof(*filename) - 1);
 		read_file(filename);
 		SetFocus(hwnd);
 		return 0;
@@ -91,6 +128,9 @@ int main() {
 	RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\DokiCom", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_QUERY_VALUE, NULL, &hkey, NULL);
 	menu_result = -1;
 	file_is_read = false;
+	mouse_is_captured = false;
+	mouse_delta_x = 0;
+	mouse_delta_y = 0;
 
 	int argc = 0;
 	LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -177,6 +217,22 @@ int main() {
 		for (int i = 0x40; i <= 0x47; i++)
 			key_matrix[i] = key_down_vk(special[i - 0x40]);
 
+		mouse_delta_x = 0;
+		mouse_delta_y = 0;
+		mouse_held[0] = false;
+		mouse_held[1] = false;
+
+		if (mouse_is_captured) {
+			POINT c = get_window_center();
+			POINT p;
+			GetCursorPos(&p);
+			mouse_delta_x = p.x - c.x;
+			mouse_delta_y = p.y - c.y;
+			SetCursorPos(c.x, c.y);
+			mouse_held[0] = key_down_vk(VK_LBUTTON);
+			mouse_held[1] = key_down_vk(VK_RBUTTON);
+		}
+
 		void application_update();
 		application_update();
 		menu_result = -1;
@@ -247,6 +303,22 @@ unsigned char* os_file_data() {
 
 bool os_input_key_is_down(unsigned char key) {
 	return key_matrix[key];
+}
+
+bool os_input_mouse_is_captured() {
+	return mouse_is_captured;
+}
+
+long os_input_mouse_delta_x() {
+	return mouse_delta_x;
+}
+
+long os_input_mouse_delta_y() {
+	return mouse_delta_y;
+}
+
+bool os_input_mouse_button_is_down(unsigned char button) {
+	return mouse_held[button];
 }
 
 void os_gl_init(long major_version, long minor_version) {

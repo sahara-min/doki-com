@@ -1,19 +1,19 @@
 include "doki.doa"
 
-section boot_rom_section [base=boot_rom]
+section boot_rom [base=wram]
 
-i = tmp0
-j = tmp1
+i = vars + 0
+j = vars + 1
 
 clear_vram:
-  dst reg_dma 
+  dst reg_dma
   cpy 0x00
   cpy 0x00
   cpy lo(vram)
   cpy hi(vram)
   cpy 0x00
   cpy 0x44
-  cpy dma_src_fixed
+  cpy dma_set
 
   dst reg_dma
   cpy 0xF0
@@ -22,7 +22,7 @@ clear_vram:
   cpy hi(vram_sprite_attr)
   cpy 0x00
   cpy 0x02
-  cpy dma_src_fixed
+  cpy dma_set
 
 load_logo_sprites:
   dst reg_dma
@@ -32,7 +32,7 @@ load_logo_sprites:
   cpy hi(vram_spriteset)
   cpy 0x00
   cpy 0x01
-  cpy 0
+  cpy dma_copy
 
 load_logo_sprite_attr:
   dst reg_dma
@@ -42,87 +42,97 @@ load_logo_sprite_attr:
   cpy hi(vram_sprite_attr)
   cpy 0x20
   cpy 0x00
-  cpy 0
+  cpy dma_copy
 
 enable_video:
-  mov 0x01
+  mov video_enabled
   wri reg_video_control
   
 animate_chars:
   dst reg_dma_dst
   cpy lo(vram_sprite_attr)
   cpy hi(vram_sprite_attr)
-  clr i
+
+  mov 8
+  wri i
 .loop_i:
   dst reg_dma_src
   cpy lo(anim_table)
   cpy hi(anim_table)
-  clr j
+
+  mov 8
+  wri j
 .loop_j:
   call vsync
 
-  inc reg_dma_count_lo
-  mov dma_dst_fixed
-  wri reg_dma_start
-  inc j
-  sub 8
-  bnz .loop_j
+  dst reg_dma_count
+  cpy 1
+  cpy 0
+  cpy dma_dst_fixed
 
-  mov reg_dma_dst_lo
-  add 4
-  wri reg_dma_dst_lo
+  dst j
+  inc -1
+  bzc .loop_j
 
-  inc i
-  sub 8
-  bnz .loop_i
+  dst reg_dma_dst_lo
+  inc 4
 
-read_disk_boot_sector:
+  dst i
+  inc -1
+  bzc .loop_i
+
+read_disk_boot_page:
+  dst reg_dma
+  cpy lo(reg_disk_fifo)
+  cpy hi(reg_disk_fifo)
+  cpy lo(wram)
+  cpy hi(wram)
+
   mov disk_seek
   wri reg_disk_fifo
   mov 0x00
   wri reg_disk_fifo
-  mov 0x00
   wri reg_disk_fifo
-  mov 0x00
   wri reg_disk_fifo
 .wait1:
   mov reg_disk_status
-  xor disk_status_ready
-  bnz .wait1
-  clr i
+  bzc .wait1
+
 .loop:
-  clr reg_disk_fifo
+  mov disk_read
+  wri reg_disk_fifo
 .wait2:
   mov reg_disk_status
-  xor disk_status_ready
-  bnz .wait2
-  mov reg_disk_fifo
-  moi i
-  wri wram
-  inc i
-  bnz .loop
-  
+  bzc .wait2
+
+  dst reg_dma_count
+  cpy 1
+  cpy 0
+  cpy dma_set
+
+  mov reg_dma_dst_lo
+  bzc .loop
+
 wait_1s:
-  clr i
+  mov 60
+  wri i
 .loop:
   call vsync
-  inc i
-  sub 60
-  bnz .loop
+  dst i
+  inc -1
+  bzc .loop
+  bcc end
 
-done:
-  jmp end
-
-vsync: word 0
+vsync:
 .wait1:
   mov reg_video_vcount
   sub 256 - display_height
-  bno .wait1
+  bcc .wait1
 .wait2:
   mov reg_video_vcount
   add 256 - display_height
-  bno .wait2
-  jmp reg_bios_return
+  bcc .wait2
+  ret sr_clear
 
 anim_table:
   byte 84, 85, 86, 87, 88, 88, 87, 86
@@ -213,8 +223,10 @@ logo_sprite_attr:
 
 padding:
   '00000000000000000000000000000000'
-  '00000000000000000000000000000000'
+  '00000000'
 
 end:
-  mov bios_enabled
-  wri reg_bios_control
+  dst boot_rom + 0x200
+  cpy 0b11111111
+  cpy 0b11110110
+  wri 0x1FFF ; Unmap Boot ROM

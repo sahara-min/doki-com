@@ -125,6 +125,26 @@ struct input_t {
 		bool os_input_key_is_down(u8 key);
 		return os_input_key_is_down(key);
 	}
+
+	pub bool mouse_is_captured() {
+		bool os_input_mouse_is_captured();
+		return os_input_mouse_is_captured();
+	}
+
+	pub i32 mouse_delta_x() {
+		i32 os_input_mouse_delta_x();
+		return os_input_mouse_delta_x();
+	}
+
+	pub i32 mouse_delta_y() {
+		i32 os_input_mouse_delta_y();
+		return os_input_mouse_delta_y();
+	}
+
+	pub bool mouse_button_is_down(u8 button) {
+		bool os_input_mouse_button_is_down(u8 button);
+		return os_input_mouse_button_is_down(button);
+	}
 };
 
 st input_t input;

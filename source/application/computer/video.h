@@ -166,8 +166,8 @@ struct video_t {
 
 	pri void handle_reg_status_reads() {
 		if (bus.control == bus.read) {
-			if (bus.address == reg_hcount) bus.data = col < 255 ? col : 255;
-			if (bus.address == reg_vcount) bus.data = row < 255 ? row : 255;
+			if (bus.address == reg_hcount) bus.data = (u8)(col < 255 ? col : 255);
+			if (bus.address == reg_vcount) bus.data = (u8)(row < 255 ? row : 255);
 		}
 	}
 
